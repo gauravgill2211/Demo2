@@ -1,0 +1,13 @@
+[theme]
+base = "dark"
+primaryColor = "#5B6EF5"
+backgroundColor = "#070D1A"
+secondaryBackgroundColor = "#0F1729"
+textColor = "#C8D0E7"
+font = "sans serif"
+
+[server]
+headless = true
+
+[runner]
+fastReruns = true
