@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Which Health Conditions Should Oura Target</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bronze-950:#241505; --bronze-900:#2f1c08; --bronze-800:#3d2410; --bronze-700:#5c3a1a; --bronze-600:#7a4f24; --bronze-glow:#a5652b;
+  --gold:#c9a24a; --gold-soft:#e3c98a;
+  --cream:#fbf6ec; --card:#fffdf8; --card-2:#f6efe0;
+  --ink:#241505; --body:#4a3826; --soft:#8a7658;
+  --line:#e6dcc8; --line-strong:#d8c9a8;
+  --shadow-card:0 2px 10px rgba(90,60,20,.08);
+  --sleep:#7d5a7a; --metabolic:#a8583f; --womens:#b8748a; --cardio:#4d7c8a; --mental:#a15c5c; --other:#8a7658; --purple-deep:#664a63;
+}
+*{box-sizing:border-box;}
+html,body{height:100%; margin:0; padding:0; overflow:hidden; background:#111; font-family:'Inter',sans-serif; color:var(--ink);}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ============ CONDITION SPEND BREAKDOWN (appendix) ============ */
+.csb-wrap{display:flex; gap:22px; flex:1 1 auto; min-height:0;}
+.csb-rail{flex:none; width:158px; display:flex; flex-direction:column; gap:5px;}
+.csb-tile{position:relative; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--tile-accent, var(--bronze-glow)); border-radius:8px; padding:6px 10px; box-shadow:var(--shadow-card); cursor:pointer; transition:transform .16s ease, box-shadow .16s ease, background .16s ease; text-align:left;}
+.csb-tile:hover{transform:translateY(-1px); box-shadow:0 8px 16px rgba(90,60,20,.16);}
+.csb-tile.active{background:linear-gradient(135deg,#F3E7D3 0%, #EEDEC0 100%); border-left-width:5px; box-shadow:0 8px 16px rgba(90,60,20,.2);}
+.csb-tile-name{display:block; font-family:'Fraunces',serif; font-weight:700; font-size:10.8px; line-height:1.15; color:var(--ink); margin-bottom:1px; padding-right:10px;}
+.csb-tile-total{display:block; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:9.4px; color:var(--bronze-700);}
+.csb-tile-hint{position:absolute; top:7px; right:8px; width:6px; height:6px; border-radius:50%; background:var(--line-strong); transition:background .16s ease;}
+.csb-tile.active .csb-tile-hint{background:var(--bronze-glow);}
+.csb-pending{background:var(--card); border:1px dashed var(--line-strong); border-radius:10px; padding:22px 26px; text-align:center; margin-top:6px;}
+.csb-note{background:#F3E7D3; border:1px solid var(--gold-soft); border-radius:8px; padding:7px 12px; font-size:10px; color:var(--bronze-800); font-style:italic; margin-bottom:8px;}
+.csb-pending-title{font-family:'Fraunces',serif; font-weight:700; font-size:15px; color:var(--bronze-700); margin-bottom:8px;}
+.csb-pending-sub{font-size:11.5px; color:var(--soft); line-height:1.5; max-width:640px; margin:0 auto;}
+.csb-panel{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.csb-panel-header{display:flex; align-items:baseline; justify-content:flex-start; gap:10px; border-bottom:2px solid var(--gold-soft); padding-bottom:8px; margin-bottom:10px;}
+.csb-panel-label{font-family:'Inter',sans-serif; font-weight:800; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--soft);}
+.csb-panel-total{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:19px; color:var(--bronze-700);}
+.csb-rows{display:flex; flex-direction:column; gap:7px;}
+.csb-row{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:9px; padding:9px 16px; box-shadow:var(--shadow-card);}
+.csb-row-rank{flex:none; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--row-accent, var(--bronze-glow)); color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:11px;}
+.csb-row-main{flex:1 1 auto; min-width:0;}
+.csb-row-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px;}
+.csb-row-label{font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; color:var(--ink);}
+.csb-row-value{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:12.5px; color:var(--row-accent, var(--bronze-700)); white-space:nowrap;}
+.csb-row-bar-track{height:5px; background:var(--card-2); border-radius:3px; overflow:hidden; margin:4px 0 4px;}
+.csb-row-bar-fill{height:100%; border-radius:3px; background:var(--row-accent, var(--bronze-glow)); transition:width .5s cubic-bezier(.4,0,.2,1);}
+.csb-row-desc{font-size:10px; color:var(--soft); line-height:1.32; font-style:italic;}
+
+/* ============ OPPORTUNITY BUBBLE MAP (intro) ============ */
+.bubble-map-wrap{position:relative; flex:1 1 auto; min-height:0; display:flex; gap:20px;}
+.bubble-plot{flex:1 1 auto; min-width:0; min-height:0; position:relative;}
+.bubble-plot svg{width:100%; height:100%; overflow:visible;}
+.bubble-click{cursor:pointer; transform-box:fill-box; transform-origin:center; transition:transform .18s ease;}
+.bubble-click circle{transition:opacity .15s ease, stroke-width .15s ease;}
+.bubble-click:hover{transform:translateY(-6px) scale(1.06);}
+.bubble-click.is-active{transform:translateY(-14px) scale(1.16);}
+.bubble-click:hover circle[fill]:not([fill="none"]){opacity:1 !important;}
+.bubble-click:hover circle[stroke], .bubble-click.is-active circle[stroke]{stroke-width:4.5;}
+.bubble-click.is-active circle[stroke]{stroke:var(--ink);}
+.bubble-detail{flex:none; width:250px; background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-card); padding:16px 18px; display:flex; flex-direction:column; overflow-y:auto;}
+.bd-empty{font-size:11.5px; color:var(--soft); font-style:italic; line-height:1.5;}
+.bd-empty-wrap{margin:auto 0; text-align:center; padding:0 8px;}
+.bd-empty-icon{width:52px; height:52px; margin-bottom:14px; opacity:0.85;}
+.bt-name{font-family:'Fraunces',serif; font-weight:700; font-size:14.5px; color:var(--ink); margin-bottom:2px;}
+.bt-sub{font-family:'Inter',sans-serif; font-weight:700; font-size:8.6px; letter-spacing:.08em; text-transform:uppercase; color:var(--bronze-glow); margin-bottom:10px;}
+.bt-row{display:flex; align-items:baseline; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line);}
+.bt-row:last-of-type{border-bottom:none;}
+.bt-row-label{font-family:'Inter',sans-serif; font-weight:700; font-size:10.2px; color:var(--soft); text-transform:uppercase; letter-spacing:.03em;}
+.bt-row-value{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:13px; color:var(--ink);}
+.bt-growth{font-size:9.8px; font-weight:700; margin-left:6px;}
+.bt-growth.up{color:#4c7a3f;}
+.bt-growth.down{color:#a5502f;}
+.bt-seg{margin-top:10px; padding-top:9px; border-top:1px dashed var(--line-strong);}
+.bt-seg-title{font-family:'Inter',sans-serif; font-weight:800; font-size:8.6px; letter-spacing:.08em; text-transform:uppercase; color:var(--bronze-glow); margin-bottom:4px;}
+.bt-seg-name{font-family:'Fraunces',serif; font-weight:700; font-size:11.5px; color:var(--ink); margin-bottom:2px;}
+.bt-seg-value{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:11px; color:var(--bronze-700);}
+.bt-note{font-size:9.6px; color:var(--soft); font-style:italic; line-height:1.4; margin-top:8px;}
+.bm-side{flex:none; width:170px; display:flex; flex-direction:column; gap:12px; padding-top:6px;}
+.bm-legend-title{font-family:'Inter',sans-serif; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); margin-bottom:4px;}
+.bm-size-legend{display:flex; align-items:flex-end; gap:10px;}
+.bm-size-item{display:flex; flex-direction:column; align-items:center; gap:4px;}
+.bm-size-circle{border-radius:50%; background:var(--card-2); border:1.5px solid var(--line-strong);}
+.bm-size-label{font-size:8px; color:var(--soft);}
+.bm-color-legend{display:flex; flex-direction:column; gap:5px;}
+.bm-color-item{display:flex; align-items:center; gap:7px; font-size:9.8px; color:var(--body); font-weight:600;}
+.bm-color-sw{width:11px; height:11px; border-radius:50%; flex:none;}
+.bm-callout{
+  background:linear-gradient(135deg,#F3E7D3 0%, #EEDEC0 100%); border:1px solid var(--gold-soft);
+  border-radius:11px; padding:10px 12px; box-shadow:var(--shadow-card); font-size:10.3px; color:var(--body); line-height:1.4; margin-top:auto;
+}
+.bm-callout b{color:var(--bronze-700); font-family:'Fraunces',serif;}
+/* ============ DECISION FRAMEWORK (framing slide) ============ */
+.full-width{max-width:none !important;}
+.df-wrap{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:center; gap:0; margin-top:6px;}
+.df-box{background:var(--card); border:1px solid var(--line); border-left:5px solid var(--df-accent, var(--bronze-glow)); border-radius:11px; padding:18px 28px; box-shadow:0 8px 20px rgba(90,60,20,.14), 0 2px 6px rgba(90,60,20,.08); position:relative;}
+.df-box-muted{background:var(--card-2); border-left-color:var(--line-strong); box-shadow:0 2px 8px rgba(90,60,20,.06);}
+.df-box-muted .df-title{color:var(--soft);}
+.df-box-muted .df-desc{color:var(--soft);}
+.df-title{font-family:'Fraunces',serif; font-weight:700; font-size:18px; color:var(--ink); line-height:1.2; margin-bottom:6px;}
+.df-desc{font-size:13px; color:var(--body); line-height:1.46; max-width:1180px;}
+.df-list{list-style:none; margin:8px 0 0 0; padding:0; display:flex; flex-direction:column; gap:5px;}
+.df-list li{padding-left:16px; position:relative; font-size:13px; color:var(--body); line-height:1.42;}
+.df-list li::before{content:"\2013"; position:absolute; left:0; color:var(--bronze-glow); font-weight:700;}
+.df-list b{color:var(--ink); font-weight:700;}
+.df-arrow-row{display:flex; justify-content:center; align-items:center; height:36px; flex:none;}
+.df-arrow{width:0; height:0; border-left:11px solid transparent; border-right:11px solid transparent; border-top:17px solid var(--bronze-glow); filter:drop-shadow(0 3px 4px rgba(90,60,20,.22));}
+.layer-axis-list li{padding-left:14px; position:relative;}
+.layer-axis-list li::before{content:"&mdash;"; content:"\2013"; position:absolute; left:0; color:var(--bronze-glow); font-weight:700;}
+.layer-axis-list b{color:var(--ink); font-weight:700;}
+.layer-row-muted .funnel-desc{color:var(--soft);}
+.layer-banner{height:38px; display:flex; align-items:center; justify-content:center; gap:9px; font-family:'Inter',sans-serif; font-weight:800; font-size:12.5px; letter-spacing:.1em; text-transform:uppercase; color:#fff; box-shadow:0 4px 10px rgba(60,36,10,.2);}
+.layer-banner-1{background:linear-gradient(90deg,#dcb96e,#c9a24a);}
+.layer-banner-2{background:linear-gradient(90deg,#b56f3a,#8a4f24);}
+.layer-banner-3{background:linear-gradient(90deg,#aeaba0,#88857a);}
+.layer-num{font-family:'Fraunces',serif; font-style:italic; font-weight:700; font-size:15px; opacity:.85;}
+.funnel-callout{position:absolute; right:20px; top:-14px; display:flex; align-items:center; gap:9px; background:var(--card); border:1px solid var(--line-strong); border-radius:24px; padding:7px 8px 7px 16px; box-shadow:var(--shadow-card); font-family:'Fraunces',serif; font-style:italic; font-size:12px; color:var(--body); white-space:nowrap; z-index:2;}
+.funnel-chip{font-family:'Inter',sans-serif; font-style:normal; font-weight:800; font-size:10px; letter-spacing:.04em; color:#fff; background:var(--bronze-900); border-radius:16px; padding:6px 12px;}
+/* ============ RECAP / TODAY / NEXT (roadmap slide) ============ */
+.rdm-wrap{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:14px; margin-top:8px; justify-content:space-between;}
+.rdm-section-head{display:flex; align-items:center; gap:11px; margin-bottom:8px;}
+.rdm-tag{font-family:'Inter',sans-serif; font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:#fff; background:var(--bronze-800); padding:4px 13px; border-radius:14px; white-space:nowrap; flex:none;}
+.rdm-tag.gold{background:linear-gradient(90deg,#dcb96e,#c9a24a);}
+.rdm-section-title{font-family:'Fraunces',serif; font-weight:700; font-size:15.5px; color:var(--ink); line-height:1.25;}
+.rdm-recap-card{background:var(--card); border:1.5px solid var(--line-strong); border-left:4px solid var(--gold); border-radius:10px; padding:14px 20px; box-shadow:var(--shadow-card);}
+.rdm-bullets{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px;}
+.rdm-bullets li{position:relative; padding-left:16px; font-size:12.6px; line-height:1.42; color:var(--body);}
+.rdm-bullets li::before{content:"\2013"; position:absolute; left:0; color:var(--bronze-glow); font-weight:700;}
+.rdm-bullets li b{color:var(--ink); font-weight:700;}
+.rdm-cols{display:flex; gap:18px;}
+.rdm-col{flex:1; background:var(--card); border:1.5px solid var(--line-strong); border-radius:10px; padding:13px 18px; box-shadow:var(--shadow-card);}
+.rdm-col-title{font-family:'Fraunces',serif; font-weight:700; font-size:13.5px; color:var(--bronze-700); margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed var(--line-strong);}
+.rdm-col .rdm-bullets li{font-size:12px;}
+.rdm-next-row{display:flex; gap:18px;}
+.rdm-next-item{flex:1; background:linear-gradient(135deg,#F3E7D3 0%, #EEDEC0 100%); border:1px solid var(--gold-soft); border-radius:11px; padding:12px 18px; box-shadow:var(--shadow-card);}
+.rdm-next-label{font-family:'Inter',sans-serif; font-weight:800; font-size:9.8px; letter-spacing:.09em; text-transform:uppercase; color:var(--bronze-glow); margin-bottom:4px;}
+.rdm-next-text{font-size:12.6px; color:var(--body); line-height:1.4;}
+.rdm-next-text b{font-family:'Fraunces',serif; color:var(--bronze-700);}
+.deck{height:100vh; overflow-y:scroll; scroll-snap-type:y mandatory; scroll-behavior:smooth; overscroll-behavior-y:contain;}
+.slide{
+  height:100%; width:100%; scroll-snap-align:start; scroll-snap-stop:always;
+  position:relative; padding:20px 74px 32px 66px; overflow:hidden;
+  display:flex; flex-direction:column; background:var(--cream);
+  background-image:radial-gradient(circle at 6% 6%, rgba(201,162,74,.07), transparent 40%);
+}
+.slide-body{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain;}
+#bubblemap .slide-body{display:flex; flex-direction:column; overflow:hidden;}
+#anatomy .slide-body{overflow-y:auto; padding-bottom:56px;}
+#leadscale .slide-body{display:flex; flex-direction:column;}
+.eyebrow{font-family:'Inter',sans-serif; font-weight:800; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--bronze-glow); margin-top:0; margin-bottom:5px;}
+.headline{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(22px,2.2vw,28px); color:var(--ink); line-height:1.16; letter-spacing:-.01em; margin-top:0; margin-bottom:0; max-width:100%;}
+.lede{font-size:14.2px; color:var(--body); line-height:1.44; max-width:100%; margin-top:0; margin-bottom:6px;}
+.pagenum{position:absolute; bottom:14px; left:66px; font-family:'Inter',sans-serif; font-size:9.5px; color:var(--soft); font-weight:600;}
+.thesis-slide-body{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:20px; max-width:1180px; margin:0 auto;}
+.thesis-headline{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(28px,3.1vw,40px); color:var(--ink); line-height:1.22; letter-spacing:-.01em;}
+.thesis-rule{width:64px; height:3px; background:var(--gold-soft); border-radius:2px;}
+.thesis-sub{font-size:16px; color:var(--body); line-height:1.52; max-width:820px;}
+.source-tag{position:absolute; bottom:14px; right:74px; font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--soft); font-weight:500;}
+.detail-link{position:absolute; bottom:36px; right:74px; display:inline-flex; align-items:center; gap:6px; background:var(--bronze-900); color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:11px; padding:8px 18px; border-radius:22px; box-shadow:var(--shadow-card); cursor:pointer; border:none; transition:transform .15s ease, box-shadow .15s ease; z-index:5;}
+.detail-link:hover{transform:translateY(-2px); box-shadow:0 10px 22px rgba(90,60,20,.28); background:var(--bronze-800);}
+.detail-link span{font-size:12px;}
+
+.dot-nav{position:fixed; right:16px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:9px; z-index:50;}
+.dot-item{width:7.5px; height:7.5px; border-radius:50%; background:rgba(90,60,20,.22); border:none; cursor:pointer; padding:0; transition:background .2s ease, transform .2s ease;}
+.dot-item:hover{background:rgba(90,60,20,.45); transform:scale(1.2);}
+.dot-tooltip{position:fixed; right:34px; padding:6px 13px; background:var(--bronze-950); color:#fbf6ec; font-family:'Inter',sans-serif; font-weight:700; font-size:12px; letter-spacing:.01em; border-radius:7px; box-shadow:0 6px 16px rgba(36,21,5,.3); opacity:0; pointer-events:none; transition:opacity .12s ease; white-space:nowrap; z-index:60; transform:translateY(-50%);}
+.dot-tooltip.visible{opacity:1;}
+.dot-item.active{background:var(--bronze-glow); transform:scale(1.3);}
+
+/* ============ COVER ============ */
+#cover{padding:0; background:#0f0904; color:#f7f1e3;}
+#cover .cover-topbar{display:flex; align-items:center; justify-content:space-between; padding:22px 40px; background:#0c0703; border-bottom:1px solid rgba(247,241,227,.08); flex:none;}
+#cover .cover-brand{display:flex; align-items:center; gap:14px;}
+#cover .cover-deloitte{font-family:'Inter',sans-serif; font-weight:800; font-size:17px; color:#f7f1e3; letter-spacing:-.01em;}
+#cover .cover-deloitte .cover-dot{color:#3fb6ac;}
+#cover .cover-divider{width:1px; height:16px; background:rgba(247,241,227,.25);}
+#cover .cover-label{font-family:'Inter',sans-serif; font-weight:600; font-size:13px; color:rgba(247,241,227,.6);}
+#cover .cover-oura{display:flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-weight:700; font-size:15px; letter-spacing:.14em; color:#f7f1e3;}
+#cover .cover-oura-mark{width:17px; height:17px; border-radius:50%; border:2px solid #cfcfcf; display:inline-block;}
+#cover .cover-split{flex:1 1 auto; min-height:0; display:flex;}
+#cover .cover-left{flex:0 0 51%; display:flex; flex-direction:column; justify-content:center; padding:0 40px 0 66px; background:radial-gradient(160% 140% at 105% 105%, rgba(197,138,66,.32) 0%, rgba(154,103,52,.16) 22%, rgba(36,21,5,0) 58%), radial-gradient(100% 100% at -5% -5%, rgba(92,58,26,.28) 0%, rgba(36,21,5,0) 50%), linear-gradient(160deg, #2b1809 0%, #201203 55%, #170c02 100%);}
+#cover .cover-bar{width:76px; height:3px; background:linear-gradient(90deg,var(--gold-soft),var(--gold)); margin-bottom:22px; border-radius:2px;}
+#cover .cover-kicker{font-family:'Inter',sans-serif; font-weight:800; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:18px;}
+#cover .cover-title{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(32px,3.6vw,48px); line-height:1.14; letter-spacing:-.01em; max-width:640px; margin-bottom:4px;}
+#cover .cover-sub{font-size:14.5px; color:rgba(247,241,227,.78); line-height:1.55; max-width:560px;}
+#cover .cover-right{flex:1 1 49%; position:relative; background:#0c0703;}
+#cover .cover-ring-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+
+/* ============ APPENDIX DIVIDER ============ */
+#appendix-divider{background:linear-gradient(150deg,#241505 0%, #3d2410 55%, #5c3a1a 100%); align-items:center; justify-content:center;}
+.appendix-divider-body{display:flex; flex-direction:column; align-items:center; text-align:center;}
+.appendix-divider-title{font-family:'Fraunces',serif; font-weight:700; font-size:46px; color:#f7f1e3; margin-bottom:4px;}
+.appendix-divider-rule{width:70px; height:3px; background:var(--gold-soft); border-radius:2px; margin-bottom:8px;}
+.appendix-divider-sub{font-family:'Inter',sans-serif; font-size:13px; font-style:italic; color:rgba(247,241,227,.65); letter-spacing:.02em;}
+
+/* ============ LANDSCAPE (bar ranking) ============ */
+.landscape-wrap{display:flex; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0; justify-content:center;}
+.land-row{display:grid; grid-template-columns:180px 1fr 90px; gap:14px; align-items:center;}
+.land-name{font-family:'Fraunces',serif; font-weight:700; font-size:13px; color:var(--ink); text-align:right;}
+.land-track{height:24px; background:var(--card-2); border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+.land-fill{height:100%; border-radius:6px 0 0 6px;}
+.land-val{font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; color:var(--bronze-700);}
+
+/* ============ WATERFALL / APPROACH ============ */
+.waterfall{display:flex; align-items:stretch; gap:0; flex:none; margin-bottom:12px;}
+.wf-step{flex:1; display:flex; flex-direction:column; align-items:center; position:relative;}
+.wf-box{width:100%; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 9px; text-align:center; box-shadow:var(--shadow-card); display:flex; flex-direction:column; gap:3px; min-height:78px; justify-content:center;}
+.wf-box-title{font-family:'Fraunces',serif; font-weight:700; font-size:11px; color:var(--ink); line-height:1.2;}
+.wf-box-sub{font-size:8.7px; color:var(--soft); line-height:1.28;}
+.wf-arrow{display:flex; align-items:center; justify-content:center; width:24px; color:var(--bronze-glow); font-size:16px; flex:none;}
+.wf-step:nth-child(1) .wf-box{background:#efe9dd;}
+.wf-step:nth-child(3) .wf-box{background:#f6ebdc;}
+.wf-step:nth-child(5) .wf-box{background:#f0dfc0;}
+.wf-step:nth-child(7) .wf-box{background:#eecab9; border-color:var(--gold-soft);}
+.wf-step:nth-child(9) .wf-box{background:var(--bronze-glow); border-color:var(--bronze-glow);}
+.wf-step:nth-child(9) .wf-box-title, .wf-step:nth-child(9) .wf-box-sub{color:#fff;}
+
+.archetype-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:11px; flex:1 1 auto; min-height:0;}
+.arch-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 12px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; gap:6px; position:relative; overflow:hidden;}
+.arch-card::before{content:""; position:absolute; top:0; left:0; right:0; height:4px; background:var(--arch-accent, var(--bronze-glow));}
+.arch-num{font-family:'Fraunces',serif; font-style:italic; font-weight:700; font-size:18px; color:var(--arch-accent, var(--bronze-glow)); opacity:.5;}
+.arch-title{font-family:'Fraunces',serif; font-weight:700; font-size:12px; color:var(--ink); line-height:1.2;}
+.arch-desc{font-size:9.8px; color:var(--body); line-height:1.36; flex:1;}
+.arch-examples{font-size:9px; color:var(--soft); font-style:italic; border-top:1px dashed var(--line-strong); padding-top:5px;}
+
+/* ============ SCREEN TABLES ============ */
+.screen-table{width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow-card); font-size:10px; table-layout:fixed;}
+.screen-table thead th{position:sticky; top:0; z-index:2; background:var(--bronze-800); color:#fff; font-family:'Inter',sans-serif; font-size:8.3px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; text-align:left; padding:6.5px 9px;}
+.screen-table thead th.screen-subhead{position:sticky; top:23px; z-index:2; background:var(--bronze-700); font-size:7.6px; padding:4px 9px;}
+.screen-table thead th:first-child{border-top-left-radius:9px;}
+.screen-table thead th:last-child{border-top-right-radius:9px;}
+.wtp-rating-cell{}
+.wtp-stat-cell:empty::before{content:"\2013"; color:var(--soft);}
+.screen-table tbody td{padding:6px 9px; color:var(--body); border-bottom:1px solid var(--line); vertical-align:top; line-height:1.28;}
+.screen-table tbody tr:nth-child(even){background:var(--card-2);}
+.screen-table tbody tr:last-child td{border-bottom:none;}
+.screen-table tbody td.cond{font-family:'Fraunces',serif; font-weight:700; color:var(--ink); font-size:10.6px;}
+.wtp-chip{display:inline-block; font-size:7.7px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; padding:1.5px 5px; border-radius:6px; color:#fff;}
+.wtp-veryhigh{background:var(--bronze-950);} .wtp-high{background:#8a7658;} .wtp-growing{background:#b8748a;} .wtp-emerginghigh{background:#9b9483;} .wtp-emerging{background:#c2bcac; color:var(--bronze-800);}
+.screen-table tbody td.burden{font-family:'IBM Plex Mono',monospace; font-size:9.6px;}
+.money-badge{display:inline-flex; align-items:center; gap:3px; background:#eef4ea; border:1px solid #b9d3ab; color:#3d6b2f; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:9.6px; padding:2.5px 7px; border-radius:6px; white-space:nowrap;}
+.money-badge .cur{font-size:9px; opacity:.85;}
+.money-plain{font-family:'IBM Plex Mono',monospace; font-size:9.6px; color:var(--soft); font-style:italic;}
+.screen-table tbody td.momentum{white-space:nowrap; font-weight:700; color:#4c7a3f; font-size:9.6px;}
+.mi{display:inline-block; width:0; height:0; border-left:3.5px solid transparent; border-right:3.5px solid transparent; border-bottom:6px solid currentColor; margin-right:1px; vertical-align:middle;}
+.screen-note{font-size:9.3px; color:var(--soft); font-style:italic; text-align:left; margin-top:7px; flex:none; line-height:1.35;}
+
+.strategy-table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; box-shadow:var(--shadow-card); font-size:10.2px;}
+.strategy-table thead th{background:var(--bronze-800); color:#fff; font-family:'Inter',sans-serif; font-size:8.3px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; text-align:center; padding:6px 7px;}
+.strategy-table thead th.cond-h{text-align:left;}
+.strategy-table tbody td{padding:4.4px 7px; color:var(--body); border-bottom:1px solid var(--line); text-align:center; vertical-align:middle;}
+.strategy-table tbody tr:nth-child(even){background:var(--card-2);}
+.strategy-table tbody tr:last-child td{border-bottom:none;}
+.strategy-table tbody td.cond{font-family:'Fraunces',serif; font-weight:700; color:var(--ink); font-size:10.6px; text-align:left; white-space:nowrap;}
+.strategy-table tbody td.role{text-align:left; font-size:9.2px; font-style:italic; color:var(--bronze-700); line-height:1.26;}
+.score-box{display:inline-block; min-width:30px; padding:2.5px 6px; border-radius:5px; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:9.6px;}
+.dots{font-family:'IBM Plex Mono',monospace; letter-spacing:1px;}
+.dots .on{color:var(--bronze-700);} .dots .off{color:var(--line-strong);}
+.watch-row td{background:#f3e9dc !important;}
+
+/* ============ PREVENTION / MOVABLE MIDDLE ============ */
+.prevent-wrap{display:flex; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0; justify-content:center;}
+.reading-key{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex:none;}
+.key-card{background:var(--card); border:1px solid var(--line); border-radius:9px; padding:7px 10px; box-shadow:var(--shadow-card); border-left:4px solid var(--key-accent, var(--bronze-glow));}
+.key-stage{font-family:'Fraunces',serif; font-weight:700; font-size:10.8px; color:var(--ink);}
+.key-means{font-size:8.4px; color:var(--soft); font-style:italic; margin:2px 0 3px; line-height:1.25;}
+.key-implication{font-size:8.6px; color:var(--body); line-height:1.3;}
+.pmtr-row{display:grid; grid-template-columns:118px 200px 1fr; gap:10px; align-items:center;}
+.pmtr-name{font-family:'Fraunces',serif; font-weight:700; font-size:10.8px; color:var(--ink); text-align:right;}
+.pmtr-bar{display:flex; height:20px; border-radius:5px; overflow:hidden; border:1px solid var(--line);}
+.pmtr-seg{display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:7.6px; font-weight:700; color:#fff; overflow:hidden; white-space:nowrap;}
+.pmtr-sowhat{font-size:9.3px; color:var(--body); line-height:1.32;}
+.pmtr-legend{display:flex; gap:16px; flex:none; justify-content:center; margin:1px 0;}
+.pmtr-legend-item{display:flex; align-items:center; gap:5px; font-size:8.8px; color:var(--body); font-weight:600;}
+.pmtr-legend-sw{width:9px; height:9px; border-radius:3px;}
+.thesis-box{
+  background:linear-gradient(135deg,#F3E7D3 0%, #EEDEC0 100%); border:1px solid var(--gold-soft);
+  border-radius:11px; padding:8px 20px; box-shadow:var(--shadow-card); font-family:'Fraunces',serif; font-style:italic; font-weight:600;
+  font-size:11.2px; color:var(--bronze-800); line-height:1.36; text-align:center; flex:none;
+}
+.pmtr-caveat{font-size:8.6px; color:var(--soft); font-style:italic; text-align:center; flex:none; line-height:1.3;}
+
+/* ============ DEEP DIVE TEMPLATE ============ */
+.dd-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:none; margin-bottom:10px;}
+.dd-card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 13px; box-shadow:var(--shadow-card); position:relative; overflow:hidden;}
+.dd-card::before{content:""; position:absolute; top:0; left:0; bottom:0; width:4px; background:var(--dd-accent, var(--bronze-glow));}
+.dd-label{font-family:'Inter',sans-serif; font-size:8.4px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--dd-accent-dark, var(--bronze-700)); margin-bottom:3px;}
+.dd-text{font-size:10.3px; color:var(--body); line-height:1.4;}
+.dd-text b{color:var(--ink);}
+
+.journey-block{background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-card); padding:11px 16px; flex:none;}
+.journey-title{font-family:'Inter',sans-serif; font-weight:800; font-size:8.6px; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); margin-bottom:8px;}
+.journey-stages{display:flex; gap:0; align-items:stretch;}
+.journey-stage{flex:1; display:flex; flex-direction:column; gap:3px; padding:0 9px; position:relative;}
+.journey-stage:not(:last-child)::after{content:"\2192"; position:absolute; right:-3px; top:16px; color:var(--line-strong); font-size:13px;}
+.journey-stage-name{font-family:'Inter',sans-serif; font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--soft);}
+.journey-stage-body{font-size:9.4px; color:var(--body); line-height:1.28; min-height:34px;}
+.journey-owner{display:inline-block; font-size:7.4px; font-weight:800; text-transform:uppercase; padding:1.5px 5px; border-radius:5px; color:#fff; margin-top:2px;}
+.owner-oura{background:var(--bronze-700);} .owner-partner{background:#4d7c8a;} .owner-both{background:linear-gradient(90deg,var(--bronze-700) 50%, #4d7c8a 50%);}
+
+.proof-box{
+  background:linear-gradient(135deg,#F3E7D3 0%, #EEDEC0 100%); border:1px solid var(--gold-soft);
+  border-radius:11px; padding:9px 18px; box-shadow:var(--shadow-card); font-size:10.6px; color:var(--body); line-height:1.36; flex:none; margin-top:9px;
+}
+.proof-box b{color:var(--bronze-700); font-family:'Fraunces',serif; font-style:italic;}
+
+/* ============ SPEND ANATOMY SMALL MULTIPLES ============ */
+.sm-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; flex:1 1 auto; min-height:0;}
+.sm-card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 13px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; gap:5px;}
+.sm-header{display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:5px;}
+.sm-name{font-family:'Fraunces',serif; font-weight:700; font-size:12.2px; color:var(--ink);}
+.sm-size{font-family:'IBM Plex Mono',monospace; font-size:10.3px; font-weight:700; color:var(--bronze-700);}
+.sm-bars{display:flex; flex-direction:column; gap:4.5px; flex:1;}
+.sm-bar-row{display:flex; align-items:flex-start; gap:7px;}
+.sm-bar-track{width:60px; flex:none; height:9px; background:var(--card-2); border-radius:3px; overflow:hidden; margin-top:2px;}
+.sm-bar-fill{height:100%; border-radius:3px;}
+.sm-bar-label{font-size:9px; color:var(--body); line-height:1.18;}
+.sm-bar-label b{color:var(--ink); font-weight:700;}
+.sm-bar-label span{display:block; color:var(--soft); font-style:italic; font-size:8.4px; margin-top:1px;}
+.sm-implication{font-size:9.4px; color:var(--bronze-700); font-style:italic; line-height:1.26; border-top:1px dashed var(--line-strong); padding-top:5px; margin-top:auto;}
+.sm-implication b{font-style:normal; font-family:'Inter',sans-serif; font-weight:800; font-size:8.2px; text-transform:uppercase; letter-spacing:.03em; display:inline-block; margin-bottom:2px; color:var(--soft);}
+.info-btn{position:relative; display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; background:var(--bronze-glow); color:#fff; font-size:9px; font-weight:800; font-style:normal; font-family:'Inter',sans-serif; cursor:help; margin-left:6px; vertical-align:middle;}
+.info-tooltip{position:absolute; bottom:130%; left:0; width:230px; background:var(--bronze-950); color:#fbf6ec; font-size:10.8px; line-height:1.42; font-style:normal; font-weight:400; padding:11px 13px; border-radius:9px; box-shadow:0 10px 24px rgba(36,21,5,.35); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .15s ease; z-index:40; text-transform:none; letter-spacing:normal;}
+.info-btn:hover .info-tooltip, .info-btn:focus .info-tooltip, .info-btn.is-open .info-tooltip{opacity:1; visibility:visible;}
+.src-btn{position:relative; display:inline-flex; align-items:center; justify-content:center; width:13px; height:13px; border-radius:50%; background:var(--bronze-glow); color:#fff; font-size:8.4px; font-weight:800; font-style:normal; font-family:'Inter',sans-serif; cursor:help; margin-left:5px; vertical-align:middle;}
+.src-tooltip{position:absolute; top:130%; left:0; width:225px; background:var(--bronze-950); color:#fbf6ec; font-size:9.4px; line-height:1.4; font-style:normal; font-weight:400; padding:9px 11px; border-radius:8px; box-shadow:0 10px 24px rgba(36,21,5,.35); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .12s ease; z-index:55; text-transform:none; letter-spacing:normal; text-align:left;}
+.src-btn:hover .src-tooltip, .src-btn:focus .src-tooltip, .src-tooltip:hover{opacity:1; visibility:visible; pointer-events:auto;}
+.src-tooltip a{color:var(--gold-soft); text-decoration:underline; display:block; margin-top:3px;}
+.src-tooltip a:first-child{margin-top:0;}
+.screen-table td{position:relative;}
+.leader-cell{display:flex; align-items:flex-start; gap:8px;}
+.leader-chip{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:7.6px; letter-spacing:.01em; flex:none; margin-top:1px;}
+.leader-text{display:flex; flex-direction:column; gap:1px;}
+.leader-desc{font-size:8.6px; color:var(--soft); font-style:italic; line-height:1.3;}
+.leader-cell b{font-weight:700; color:var(--ink);}
+.sm-footnote{font-size:9px; color:var(--soft); font-style:italic; text-align:center; margin-top:8px; flex:none;}
+
+/* ============ APPENDIX: WTP DETAIL TABLE ============ */
+.appendix-table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; box-shadow:var(--shadow-card); font-size:9.2px;}
+/* ============ RECOMMENDATION SLIDE (hypothesis) ============ */
+#esum .slide-body{display:flex; flex-direction:column;}
+.rec-body{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:22px; justify-content:center;}
+.rec-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:18px; align-items:stretch;}
+.rec-card{
+  background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px 20px; box-shadow:var(--shadow-card);
+  display:flex; flex-direction:column; gap:10px; position:relative; overflow:hidden;
+}
+.rec-card::before{content:""; position:absolute; top:0; left:0; right:0; height:6px; background:var(--rc-accent, var(--bronze-glow));}
+.rec-card-hero{background:linear-gradient(160deg,#faf1d9 0%, var(--card) 58%); border-color:var(--gold-soft); box-shadow:0 14px 32px rgba(180,140,60,.26); transform:scale(1.05); z-index:2;}
+.rec-num{font-family:'Fraunces',serif; font-style:italic; font-weight:700; font-size:28px; color:var(--rc-accent, var(--bronze-glow)); opacity:.4; line-height:1;}
+.rec-tag{align-self:flex-start; font-family:'Inter',sans-serif; font-weight:800; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#fff; background:var(--rc-accent, var(--bronze-glow)); padding:4.5px 12px; border-radius:20px; white-space:nowrap;}
+.rec-title{font-family:'Fraunces',serif; font-weight:700; font-size:18px; color:var(--ink); line-height:1.2;}
+.rec-examples{font-size:11.5px; color:var(--soft); font-style:italic; line-height:1.3;}
+.rec-fit-track{height:7px; background:var(--card-2); border-radius:4px; overflow:hidden; margin-top:1px;}
+.rec-fit-fill{height:100%; border-radius:4px; background:var(--rc-accent, var(--bronze-glow));}
+.rec-takeaway{font-size:12.5px; color:var(--body); line-height:1.46; flex:1;}
+.rec-banner{background:linear-gradient(135deg,#2f1c08 0%, #4a2f14 55%, #5c3a1a 100%); border-radius:16px; padding:20px 40px; box-shadow:0 14px 32px rgba(60,36,10,.28); text-align:center; flex:none;}
+.rec-banner-label{font-family:'Inter',sans-serif; font-weight:800; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:9px;}
+.rec-banner-text{font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:18.5px; color:#fbf6ec; line-height:1.46; max-width:1080px; margin:0 auto;}
+.rec-chips{display:flex; justify-content:center; gap:16px; flex:none;}
+.rec-chip{display:flex; align-items:center; gap:7px; background:var(--card); border:1px solid var(--line); border-radius:24px; padding:9px 20px; font-size:12.5px; color:var(--body); font-weight:600; box-shadow:var(--shadow-card);}
+.rec-chip b{color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-style:italic;}
+
+/* ============ RTW DIMENSIONS (definitions slide) ============ */
+#rtwdims .slide-body{display:flex; flex-direction:column;}
+.rtwdim-grid{display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:1fr; gap:16px; flex:1 1 auto; min-height:0;}
+.rtwdim-card{
+  background:var(--card); border:1px solid var(--line); border-radius:14px; padding:26px 24px 24px; box-shadow:var(--shadow-card);
+  display:flex; flex-direction:column; position:relative; overflow:visible;
+}
+.rtwdim-card::before{content:"";position:absolute; top:0; left:0; right:0; height:5px; border-radius:14px 14px 0 0; background:var(--rd-accent, var(--bronze-glow));}
+.rtwdim-num{position:absolute; top:16px; left:22px; font-family:'Fraunces',serif; font-style:italic; font-weight:700; font-size:28px; color:var(--rd-accent, var(--bronze-glow)); opacity:.35; line-height:1;}
+.rtwdim-q{font-family:'Fraunces',serif; font-weight:700; font-size:19.5px; color:var(--ink); line-height:1.26; margin-top:34px;}
+.rtwdim-tag{font-family:'Inter',sans-serif; font-weight:800; font-size:9.8px; letter-spacing:.08em; text-transform:uppercase; color:var(--rd-accent, var(--bronze-glow)); border-top:1px dashed var(--line-strong); padding-top:12px; margin-top:14px;}
+.rtwdim-def{font-size:16px; color:var(--body); line-height:1.5; font-style:italic; padding-top:22px;}
+
+/* ============ RIGHT-TO-WIN SCREEN (full detail) ============ */
+.rtw-body{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:16px; padding-top:4px;}
+.rtw-legend{display:flex; align-items:center; flex-wrap:wrap; gap:18px; flex:none; padding:1px 2px;}
+.rtw-legend-label{font-family:'Inter',sans-serif; font-weight:800; font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--soft); margin-right:2px;}
+.rtw-legend-scale{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--soft);}
+.rtw-legend-scale span.sb{margin-right:2px;}
+.rtw-legend-hint{margin-left:auto; font-size:11.5px; font-style:italic; color:var(--soft); display:flex; align-items:center; gap:5px;}
+.rtw-legend-hint .info-btn{background:var(--bronze-glow); margin:0 2px;}
+
+.rtw-table{width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-card); font-size:12.2px; table-layout:fixed;}
+.rtw-table thead th{position:sticky; top:0; z-index:2; background:var(--bronze-800); color:#fff; font-family:'Inter',sans-serif; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; text-align:center; padding:13px 6px; line-height:1.25;}
+.rtw-table thead th:first-child{border-top-left-radius:11px;}
+.rtw-table thead th:last-child{border-top-right-radius:11px;}
+.rtw-table thead th.lft{text-align:left; padding-left:16px;}
+.rtw-table tbody td{padding:13px 6px; border-bottom:1px solid var(--line); vertical-align:middle; text-align:center; color:var(--body);}
+.rtw-table tbody tr:nth-child(even){background:var(--card-2);}
+.rtw-table tbody tr:hover{background:#f3e9dc;}
+.rtw-table tbody tr:last-child td{border-bottom:none;}
+.rtw-table tbody tr:last-child td:first-child{border-bottom-left-radius:11px;}
+.rtw-table tbody tr:last-child td:last-child{border-bottom-right-radius:11px;}
+.rtw-plat{font-family:'Fraunces',serif; font-weight:700; color:var(--ink); font-size:13.2px; text-align:left !important; padding-left:16px !important; white-space:nowrap;}
+.rtw-wedge{text-align:left !important; font-size:11.6px; color:var(--body); line-height:1.36; font-style:italic;}
+.rtw-verdict-cell{text-align:left !important;}
+
+.sb{display:inline-flex; align-items:center; justify-content:center; min-width:26px; padding:3px 4px; border-radius:5px; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:9px; line-height:1;}
+.sb-h{background:var(--bronze-700); color:#fff;}
+.sb-mh{background:#c39a5c; color:#2f1c08;}
+.sb-m{background:#ddc596; color:#3d2410;}
+.sb-lm{background:#e9dfc7; color:#5c4a2e;}
+.sb-l{background:#f1ece0; color:var(--soft);}
+.sb.tipbtn{position:relative; cursor:pointer;}
+.sb.tipbtn::after{content:""; position:absolute; top:-6px; right:-4px; width:6px; height:6px; border-radius:50%; background:var(--bronze-glow); border:1.5px solid var(--card); opacity:.85;}
+.sb-tip{position:absolute; bottom:130%; right:0; width:205px; background:var(--bronze-950); color:#fbf6ec; font-family:'Inter',sans-serif; font-size:10px; line-height:1.4; font-weight:400; font-style:normal; text-transform:none; letter-spacing:normal; padding:9px 11px; border-radius:8px; box-shadow:0 10px 24px rgba(36,21,5,.35); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .12s ease; z-index:50;}
+.sb.tipbtn:hover .sb-tip, .sb.tipbtn:focus .sb-tip, .sb.tipbtn.is-open .sb-tip{opacity:1; visibility:visible;}
+
+.verdict-pill{display:inline-flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-weight:800; font-size:9.5px; letter-spacing:.02em; text-transform:uppercase; padding:5px 12px; border-radius:20px; color:#fff; white-space:nowrap;}
+.verdict-lead{background:var(--bronze-700);}
+.verdict-build{background:#b8874a;}
+.verdict-potential{background:#4d7c8a;}
+.verdict-medium{background:#a08a5c;}
+.verdict-medlow{background:#b3a37e;}
+.verdict-low{background:#c7bfa9; color:#5c4a2e;}
+.verdict-pill .info-btn{background:rgba(255,255,255,.35); color:#2f1c08; margin-left:1px; width:16px; height:16px; font-size:10px;}
+
+.info-tooltip.info-tooltip-wide{width:260px;}
+.info-tooltip.info-tooltip-right{left:auto; right:0;}
+
+.rtw-bottom-line{
+  font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:12.5px; color:var(--bronze-800);
+  text-align:center; flex:none; margin-top:2px; max-width:980px; margin-left:auto; margin-right:auto; line-height:1.4;
+}
+.appendix-table thead th{background:var(--bronze-800); color:#fff; font-family:'Inter',sans-serif; font-size:7.8px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; text-align:left; padding:6px 8px;}
+.appendix-table tbody td{padding:5.5px 8px; color:var(--body); border-bottom:1px solid var(--line); vertical-align:top; line-height:1.28;}
+.appendix-table tbody tr:nth-child(even){background:var(--card-2);}
+.appendix-table tbody tr:last-child td{border-bottom:none;}
+.appendix-table tbody td.cond{font-family:'Fraunces',serif; font-weight:700; color:var(--ink); font-size:9.8px;}
+.methodology-table{margin-bottom:14px;}
+.methodology-table td.cond{white-space:nowrap;}
+.methodology-table th:nth-child(1){width:11%;}
+.methodology-table th:nth-child(2){width:16%;}
+.methodology-table th:nth-child(3){width:37%;}
+.methodology-table th:nth-child(4){width:36%;}
+.scoring-scale-card{background:var(--card); border:1px solid var(--line); border-radius:11px; box-shadow:var(--shadow-card); padding:14px 22px 16px 22px;}
+.scoring-scale-label{font-family:'Inter',sans-serif; font-weight:800; font-size:9.8px; letter-spacing:.1em; text-transform:uppercase; color:var(--soft); margin-bottom:9px;}
+.scoring-scale-bar{height:30px; border-radius:16px; background:linear-gradient(90deg,#b3492f 0%,#c9793a 25%,#d9b23c 50%,#8fa84e 75%,#4c7a3f 100%); display:flex; align-items:center; justify-content:space-between; padding:0 16px; box-shadow:inset 0 1px 3px rgba(0,0,0,.12);}
+.scoring-scale-bar span{font-family:'Inter',sans-serif; font-weight:800; font-size:11px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.25);}
+.scoring-scale-caption{font-size:11.3px; color:var(--body); line-height:1.42; margin-top:9px;}
+.scoring-scale-caption b{color:var(--ink); font-family:'Fraunces',serif;}
+#methodology .appendix-table{font-size:12.2px;}
+#methodology .appendix-table thead th{font-size:10.8px;}
+#methodology .appendix-table tbody td.cond{font-size:12.8px;}
+#methodology .scoring-scale-label{font-size:12.8px;}
+#methodology .scoring-scale-bar span{font-size:14px;}
+#methodology .scoring-scale-caption{font-size:14.3px;}
+
+/* ============ LANDSCAPE TABLE (2023 -> 2040) ============ */
+.land-summary{
+  display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1px solid var(--line);
+  border-radius:12px; padding:11px 20px; box-shadow:var(--shadow-card); flex:none; margin-bottom:10px;
+}
+.land-summary-label{font-family:'Inter',sans-serif; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--soft);}
+.land-summary-value{font-family:'Fraunces',serif; font-weight:700; font-size:19px; color:var(--bronze-800);}
+.land-summary-note{font-size:9.5px; color:var(--soft); font-style:italic; text-align:right; line-height:1.35;}
+.land-table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; box-shadow:var(--shadow-card); font-size:9px;}
+.land-table thead th{background:var(--bronze-800); color:#fff; font-family:'Inter',sans-serif; font-size:7.6px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; text-align:right; padding:5px 8px;}
+.land-table thead th.first{text-align:left;}
+.land-table tbody td{padding:3.6px 8px; color:var(--body); border-bottom:1px solid var(--line); text-align:right; vertical-align:middle;}
+.land-table tbody tr:nth-child(even){background:var(--card-2);}
+.land-table tbody tr:last-child td{border-bottom:none;}
+.land-table tbody td.cond{font-family:'Fraunces',serif; font-weight:700; color:var(--ink); font-size:9.8px; text-align:left; display:flex; align-items:center; gap:6px;}
+.focus-tag{display:inline-block; font-family:'Inter',sans-serif; font-size:6.6px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; padding:1px 5px; border-radius:5px; color:#fff; background:var(--bronze-700);}
+.focus-tag.potential{background:var(--card-2); color:var(--soft); border:1px solid var(--line-strong);}
+.change-pos{color:#4d7c5c; font-weight:700;}
+.change-neg{color:#a15c5c; font-weight:700;}
+.rxmed-cell{display:flex; align-items:center; gap:5px; justify-content:flex-end;}
+.rxmed-bar{width:34px; height:8px; border-radius:2px; overflow:hidden; display:flex; flex:none;}
+.rxmed-label{font-family:'IBM Plex Mono',monospace; font-size:7.6px; color:var(--soft); white-space:nowrap;}
+.rxmed-na{color:var(--line-strong); font-style:italic;}
+
+/* ============ ARCHETYPES: VISUAL CARDS ============ */
+.arch-visual-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:13px; flex:1 1 auto; min-height:0; align-items:stretch;}
+.arch-visual-card{
+  background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 14px; box-shadow:var(--shadow-card);
+  display:flex; flex-direction:column; gap:9px; position:relative; overflow:hidden;
+}
+.arch-visual-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:var(--av-accent, var(--bronze-glow));}
+.arch-visual-card-hero{background:linear-gradient(160deg,#eef4f5 0%, var(--card) 55%); border-color:#bcd2d7; box-shadow:0 6px 18px rgba(77,124,138,.18); transform:scale(1.03);}
+.av-num{font-family:'Fraunces',serif; font-style:italic; font-weight:700; font-size:26px; color:var(--av-accent, var(--bronze-glow)); opacity:.4; line-height:1;}
+.av-title{font-family:'Fraunces',serif; font-weight:700; font-size:13.5px; color:var(--ink); line-height:1.22;}
+.av-examples{font-size:9.3px; color:var(--soft); font-style:italic; line-height:1.3;}
+.av-fit-track{height:8px; background:var(--card-2); border-radius:4px; overflow:hidden; margin-top:2px;}
+.av-fit-fill{height:100%; border-radius:4px; background:var(--av-accent, var(--bronze-glow));}
+.av-fit-label{font-family:'Inter',sans-serif; font-size:8.4px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--av-accent, var(--bronze-glow));}
+.av-takeaway{font-size:10px; color:var(--body); line-height:1.4; flex:1;}
+.av-takeaway i{font-style:italic; color:var(--ink);}
+.arch-bottom-line{
+  font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:13.5px; color:var(--bronze-800);
+  text-align:center; flex:none; margin-top:14px; max-width:920px; margin-left:auto; margin-right:auto; line-height:1.42;
+}
+
+/* ============ STAIRCASE (Lead First / Attach Later / Retain) ============ */
+.stair-wrap{display:flex; flex-direction:column; flex:1 1 auto; min-height:0; justify-content:center; gap:22px;}
+.stair-steps{display:flex; align-items:flex-end; gap:22px;}
+.stair-box{
+  background:var(--card); border-radius:12px; box-shadow:0 10px 24px rgba(60,36,10,.16);
+  padding:18px 22px; display:flex; flex-direction:column; position:relative;
+  border-top:5px solid var(--sb-accent, var(--bronze-glow));
+}
+.stair-box-1{--sb-accent:#4d7c8a; flex:1; height:185px;}
+.stair-box-2{--sb-accent:#a8583f; flex:1; height:225px;}
+.stair-box-num{position:absolute; top:12px; right:16px; font-family:'Fraunces',serif; font-style:italic; font-weight:700; font-size:24px; color:var(--sb-accent); opacity:.45; line-height:1;}
+.stair-box-tag{align-self:flex-start; font-family:'Inter',sans-serif; font-weight:800; font-size:9.3px; letter-spacing:.08em; text-transform:uppercase; color:#fff; background:var(--sb-accent); padding:3px 10px; border-radius:20px; margin-bottom:10px;}
+.stair-box-title{font-family:'Fraunces',serif; font-weight:700; font-size:18px; color:var(--ink); line-height:1.16; margin-bottom:3px; max-width:88%;}
+.stair-box-examples{font-size:11px; font-style:italic; color:var(--soft); margin-bottom:9px;}
+.stair-box-fit-track{height:7px; background:var(--card-2); border-radius:4px; overflow:hidden; margin-bottom:4px;}
+.stair-box-fit-fill{height:100%; border-radius:4px; background:var(--sb-accent);}
+.stair-box-fit-label{font-family:'Inter',sans-serif; font-weight:800; font-size:9.3px; text-transform:uppercase; letter-spacing:.04em; color:var(--sb-accent); margin-bottom:10px;}
+.stair-box-desc{font-size:11.8px; color:var(--body); line-height:1.42; margin-top:auto;}
+.stair-box-desc i{font-style:italic; color:var(--ink);}
+.stair-box-foundation{--sb-accent:#a15c5c; flex-direction:row; align-items:center; gap:26px; border-top:none; border-left:5px solid var(--sb-accent); padding:18px 26px;}
+.stair-box-foundation .stair-box-num{position:static; flex:none; margin-right:2px;}
+.stair-box-foundation-body{flex:1 1 auto; min-width:0;}
+.stair-box-foundation-body .stair-box-tag{margin-bottom:6px;}
+.stair-box-foundation-body .stair-box-title{margin-bottom:2px; max-width:100%;}
+.stair-box-foundation-body .stair-box-examples{margin-bottom:6px;}
+.stair-box-foundation-body .stair-box-desc{font-size:11.8px; line-height:1.42;}
+.stair-box-foundation-fit{flex:none; width:150px;}
+.stair-box-foundation-fit .stair-box-fit-label{margin-bottom:0;}
+/* ============ APPENDIX WTP TABLE ============ */
+.appendix-divider-slide{background:linear-gradient(150deg,#241505 0%, #3d2410 55%, #5c3a1a 100%); align-items:center; justify-content:center;}
+.appendix-divider-slide .slide-body{display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;}
+.appendix-divider-title{font-family:'Fraunces',serif; font-weight:700; font-size:44px; color:#f7f1e3; margin-bottom:4px;}
+.appendix-divider-rule{width:60px; height:3px; background:var(--gold-soft); border-radius:2px; margin-bottom:8px;}
+.appendix-divider-sub{font-family:'Inter',sans-serif; font-size:13px; font-style:italic; color:rgba(247,241,227,.7);}
+
+.wtp-table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:9px; overflow:hidden; box-shadow:var(--shadow-card); font-size:8.6px;}
+.wtp-table thead th{background:var(--bronze-800); color:#fff; font-family:'Inter',sans-serif; font-size:7.6px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; text-align:left; padding:6px 8px;}
+.wtp-table tbody td{padding:6px 8px; color:var(--body); border-bottom:1px solid var(--line); vertical-align:top; line-height:1.32;}
+.wtp-table tbody tr:nth-child(even){background:var(--card-2);}
+.wtp-table tbody tr:last-child td{border-bottom:none;}
+.wtp-table tbody td.cond{font-family:'Fraunces',serif; font-weight:700; color:var(--ink); font-size:9.6px;}
+.wtp-table tbody td.wtpcell{white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<nav class="dot-nav">
+  <button class="dot-item" data-target="cover" data-page="1" data-title="Cover"></button>
+  <button class="dot-item" data-target="scoping" data-page="2" data-title="Recap & Roadmap"></button>
+  <button class="dot-item" data-target="esum" data-page="3" data-title="Hypothesis"></button>
+  <button class="dot-item" data-target="bubblemap" data-page="4" data-title="Opportunity Bubble Map"></button>
+  <button class="dot-item" data-target="conditionscreen" data-page="5" data-title="Opportunity Screen"></button>
+  <button class="dot-item" data-target="rtwdims" data-page="6" data-title="Right-to-Win Framework"></button>
+  <button class="dot-item" data-target="rtw" data-page="7" data-title="Right-to-Win Scorecard"></button>
+  <button class="dot-item" data-target="anatomy" data-page="8" data-title="Spend Anatomy"></button>
+  <button class="dot-item" data-target="appendix-divider" data-page="9" data-title="Appendix"></button>
+  <button class="dot-item" data-target="appendix-wtp" data-page="10" data-title="Employer Willingness-to-Pay Detail"></button>
+  <button class="dot-item" data-target="condition-spend-breakdown" data-page="11" data-title="Condition Spend Breakdown"></button>
+</nav>
+<div class="dot-tooltip" id="dotTooltip"></div>
+
+<div class="deck">
+
+  <section class="slide" id="cover">
+    <div class="cover-topbar">
+      <div class="cover-brand">
+        <span class="cover-deloitte">Deloitte<span class="cover-dot">.</span></span>
+        <span class="cover-divider"></span>
+        <span class="cover-label">Employer Platform Strategy</span>
+      </div>
+      <div class="cover-oura"><span class="cover-oura-mark"></span>OURA</div>
+    </div>
+    <div class="cover-split">
+      <div class="cover-left">
+        <div class="cover-bar"></div>
+        <div class="cover-kicker">Employer Offerings &times; Health Conditions</div>
+        <h1 class="cover-title">Which Health Conditions Should Oura Target and Why</h1>
+        <p class="cover-sub">Condition-specific deep dives covering market context, spend anatomy and Oura's potential role through the care journey.</p>
+      </div>
+      <div class="cover-right">
+        <img class="cover-ring-img" alt="Oura Ring" src="data:image/jpeg;base64,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">
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 2: SCOPING FUNNEL -->
+  <section class="slide" id="scoping">
+    <div class="eyebrow">Framing the Analysis</div>
+    <h2 class="headline full-width">Among several potential employer wedges, we are exploring where condition-specific health could create a differentiated role for Oura</h2>
+    <div class="rdm-wrap">
+
+      <div class="rdm-section">
+        <div class="rdm-section-head">
+          <span class="rdm-tag">Recap</span>
+        </div>
+        <div class="rdm-recap-card">
+          <ul class="rdm-bullets">
+            <li>Employer offerings are converging: plans, navigators and condition vendors are expanding across navigation, virtual care and proactive engagement</li>
+            <li>Navigation / AI-first care faces increasing differentiation pressure: Counsel can extend Oura&rsquo;s clinical reach, but AI chat and provider access alone are unlikely to create a durable advantage</li>
+            <li>Condition-specific health warrants deeper exploration: it provides a clearer opportunity to connect Oura&rsquo;s biometric data + engagement to employer health priorities</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rdm-section">
+        <div class="rdm-section-head">
+          <span class="rdm-tag gold">Today</span>
+          <span class="rdm-section-title">Identify where employer opportunity intersects with Oura&rsquo;s right to win</span>
+        </div>
+        <div class="rdm-cols">
+          <div class="rdm-col">
+            <div class="rdm-col-title">Market Attractiveness</div>
+            <ul class="rdm-bullets">
+              <li>Medical + Rx spend and growth</li>
+              <li>Employer willingness to pay / benefit adoption</li>
+              <li>Spend drivers and addressable subsegments</li>
+              <li>Competitive scale and market maturity</li>
+            </ul>
+          </div>
+          <div class="rdm-col">
+            <div class="rdm-col-title">Oura Right to Win</div>
+            <ul class="rdm-bullets">
+              <li>Data + capability advantage</li>
+              <li>Ability to change a meaningful health action</li>
+              <li>Consumer pull / engagement</li>
+              <li>Competitive whitespace</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="rdm-section">
+        <div class="rdm-section-head">
+          <span class="rdm-tag">Next</span>
+        </div>
+        <div class="rdm-next-row">
+          <div class="rdm-next-item">
+            <div class="rdm-next-label">Next Session</div>
+            <div class="rdm-next-text">Translate priority wedges into care journeys and own vs. partner</div>
+          </div>
+          <div class="rdm-next-item">
+            <div class="rdm-next-label">Next Week</div>
+            <div class="rdm-next-text">Size the business case and economics for the leading proposition(s)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="pagenum">2</div>
+  </section>
+
+  <!-- PAGE 3: HYPOTHESIS -->
+  <section class="slide" id="esum">
+    <div class="eyebrow">Data Analysis Insights</div>
+    <h2 class="headline">Hypothesis: These Are the Most Favorable Health Conditions to Explore</h2>
+    <p class="lede">Start where Oura&rsquo;s data is already differentiated and deployable today, then reuse those same capabilities to build a connected prevention layer instead of a portfolio of disconnected point solutions.</p>
+    <div class="slide-body">
+      <div class="rec-body">
+
+        <div class="rec-grid">
+
+          <div class="rec-card rec-card-hero" style="--rc-accent:#7d5a7a;">
+            <div class="rec-num">1</div>
+            <div class="rec-tag">Lead</div>
+            <div class="rec-title">Sleep</div>
+            <div class="rec-examples">Insomnia + targeted OSA</div>
+            <div class="rec-fit-track"><div class="rec-fit-fill" style="width:96%;"></div></div>
+            <div class="rec-takeaway">Oura&rsquo;s deepest data and consumer permission. Own measurement and monitoring; let partners handle testing and treatment.</div>
+          </div>
+
+          <div class="rec-card" style="--rc-accent:#a8583f;">
+            <div class="rec-num">2</div>
+            <div class="rec-tag">Build</div>
+            <div class="rec-title">Metabolic / GLP-1</div>
+            <div class="rec-examples">GLP-1 + cardiometabolic risk</div>
+            <div class="rec-fit-track"><div class="rec-fit-fill" style="width:74%;"></div></div>
+            <div class="rec-takeaway">High, identifiable spend in a crowded clinical market. Own the between-visit layer around Dexcom&rsquo;s glucose signal.</div>
+          </div>
+
+          <div class="rec-card" style="--rc-accent:#b8748a;">
+            <div class="rec-num">3</div>
+            <div class="rec-tag">Build</div>
+            <div class="rec-title">Women&rsquo;s Health</div>
+            <div class="rec-examples">Menopause + fertility + pregnancy</div>
+            <div class="rec-fit-track"><div class="rec-fit-fill" style="width:74%;"></div></div>
+            <div class="rec-takeaway">Three distinct life-stage journeys where Oura&rsquo;s cycle, temperature and sleep data are already relevant and habitually tracked.</div>
+          </div>
+
+          <div class="rec-card" style="--rc-accent:#4d7c8a;">
+            <div class="rec-num">4</div>
+            <div class="rec-tag">Expand to Platform</div>
+            <div class="rec-title">Predictive Prevention</div>
+            <div class="rec-examples">Sleep + Metabolic + CV risk</div>
+            <div class="rec-fit-track"><div class="rec-fit-fill" style="width:55%;"></div></div>
+            <div class="rec-takeaway">Flags emerging risk across sleep, metabolic and cardiovascular signals before a diagnosis exists. The biggest long-term platform idea, but constrained today by Oura&rsquo;s inability to see people who don&rsquo;t wear a ring.</div>
+          </div>
+
+          <div class="rec-card" style="--rc-accent:#8a7658;">
+            <div class="rec-num">5</div>
+            <div class="rec-tag">Explore Selectively</div>
+            <div class="rec-title">Other Conditions</div>
+            <div class="rec-examples">Cancer, MSK, mental health</div>
+            <div class="rec-fit-track"><div class="rec-fit-fill" style="width:22%;"></div></div>
+            <div class="rec-takeaway">Large market sizes, but competitive intensity and complex care journeys mean these require careful navigation rather than a clear Oura-native wedge.</div>
+          </div>
+
+        </div>
+
+        <div class="rec-banner">
+          <div class="rec-banner-text">Enter where Oura&rsquo;s data changes something valuable that others don&rsquo;t already solve, and where it can own enough of the journey to justify the ring.</div>
+        </div>
+
+        <div class="rec-chips">
+          <div class="rec-chip">Partners <b>complete</b>, not carry</div>
+          <div class="rec-chip">Sequence the <b>hardware</b></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="pagenum">3</div>
+  </section>
+
+  <section class="slide" id="bubblemap">
+    <div class="eyebrow">The Opportunity, at a Glance</div>
+    <h2 class="headline">Market Attractiveness &times; Right to Win: Where Employer Demand Meets Oura&rsquo;s Advantage</h2>
+    <p class="lede">Many conditions already attract significant employer spending. Oura should focus only where its continuous signals can improve the existing member journey.</p>
+    <div class="slide-body">
+      <div class="bubble-map-wrap">
+        <div class="bubble-plot">
+          <svg viewBox="15 5 1220 615" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="gradTaupe" cx="35%" cy="28%" r="80%"><stop offset="0%" stop-color="#a3906f"/><stop offset="100%" stop-color="#7d6a4e"/></radialGradient>
+              <radialGradient id="gradTeal" cx="35%" cy="28%" r="80%"><stop offset="0%" stop-color="#6b93a0"/><stop offset="100%" stop-color="#436f7d"/></radialGradient>
+              <radialGradient id="gradRed" cx="35%" cy="28%" r="80%"><stop offset="0%" stop-color="#b87878"/><stop offset="100%" stop-color="#914f4f"/></radialGradient>
+              <radialGradient id="gradRust" cx="35%" cy="28%" r="80%"><stop offset="0%" stop-color="#c17a5c"/><stop offset="100%" stop-color="#954d31"/></radialGradient>
+              <radialGradient id="gradPink" cx="35%" cy="28%" r="80%"><stop offset="0%" stop-color="#cf95a8"/><stop offset="100%" stop-color="#a5657c"/></radialGradient>
+              <radialGradient id="gradPurple" cx="35%" cy="28%" r="80%"><stop offset="0%" stop-color="#987194" stop-opacity="1"/><stop offset="100%" stop-color="#664a63"/></radialGradient>
+              <filter id="bubbleShadow" x="-60%" y="-60%" width="220%" height="220%">
+                <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#3d2410" flood-opacity="0.28"/>
+              </filter>
+              <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#8a7658"/></marker>
+            </defs>
+
+            <!-- sweet-spot quadrant tint -->
+            <rect x="662.4" y="30" width="532.4" height="255" fill="#c9a24a" opacity="0.07"/>
+
+            <!-- plot frame -->
+            <line x1="130" y1="30" x2="130" y2="540" stroke="#d8c9a8" stroke-width="1.5"/>
+            <line x1="130" y1="540" x2="1194.8" y2="540" stroke="#d8c9a8" stroke-width="1.5" marker-end="url(#arrowHead)"/>
+            <line x1="662.4" y1="30" x2="662.4" y2="540" stroke="#e6dcc8" stroke-width="1" stroke-dasharray="4,4"/>
+            <line x1="130" y1="285" x2="1194.8" y2="285" stroke="#e6dcc8" stroke-width="1" stroke-dasharray="4,4"/>
+
+            <!-- axis titles (native SVG, no CSS overlay) -->
+            <text x="662.4" y="600" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" letter-spacing="0.5" fill="#5c3a1a">EMPLOYER WILLINGNESS TO PAY &rarr;</text>
+            <text x="-285" y="45" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" letter-spacing="0.5" fill="#5c3a1a" transform="rotate(-90)">OURA RIGHT-TO-WIN &uarr;</text>
+
+            <!-- bubbles: large enough for inside labels -->
+            <g class="bubble-click" data-key="gi" filter="url(#bubbleShadow)">
+              <circle cx="865.7" cy="315" r="34" fill="url(#gradTaupe)"/>
+              <text x="865.7" y="311" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="12" fill="#fff">Gastro-</text>
+              <text x="865.7" y="323" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="12" fill="#fff">intestinal</text>
+            </g>
+
+            <g class="bubble-click" data-key="cancer" filter="url(#bubbleShadow)">
+              <circle cx="1088.3" cy="362" r="44" fill="url(#gradTaupe)"/>
+              <text x="1088.3" y="367" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="15.6" fill="#fff">Cancer</text>
+            </g>
+
+            <g class="bubble-click" data-key="msk" filter="url(#bubbleShadow)">
+              <circle cx="1170.6" cy="270" r="49" fill="url(#gradTaupe)"/>
+              <text x="1170.6" y="275" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="15.6" fill="#fff">MSK</text>
+            </g>
+
+            <g class="bubble-click" data-key="cvd" filter="url(#bubbleShadow)">
+              <circle cx="914.1" cy="223" r="44" fill="url(#gradTeal)"/>
+              <text x="914.1" y="212" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="11.4" fill="#fff">Established</text>
+              <text x="914.1" y="225" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="11.4" fill="#fff">Cardiovascular</text>
+              <text x="914.1" y="238" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="11.4" fill="#fff">Disease</text>
+            </g>
+
+            <g class="bubble-click" data-key="mental" filter="url(#bubbleShadow)">
+              <circle cx="1152.4" cy="223" r="42" fill="none" stroke="#c9a24a" stroke-width="3" stroke-dasharray="3,3"/>
+              <circle cx="1152.4" cy="223" r="38" fill="url(#gradRed)"/>
+              <text x="1152.4" y="219" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="13.2" fill="#fff">Mental</text>
+              <text x="1152.4" y="233" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="13.2" fill="#fff">Health</text>
+            </g>
+
+            <g class="bubble-click" data-key="diabetes" filter="url(#bubbleShadow)">
+              <circle cx="1067.8" cy="270" r="36" fill="url(#gradRust)"/>
+              <text x="1067.8" y="275" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="15" fill="#fff">Diabetes</text>
+            </g>
+
+            <!-- sweet-spot bubbles: highlighted with a gold ring -->
+            <g class="bubble-click" data-key="maternity" filter="url(#bubbleShadow)">
+              <circle cx="952.8" cy="140" r="37" fill="none" stroke="#c9a24a" stroke-width="3" stroke-dasharray="3,3"/>
+              <circle cx="952.8" cy="140" r="33" fill="url(#gradPink)"/>
+              <text x="952.8" y="145" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="13.8" fill="#fff">Maternity</text>
+            </g>
+
+            <g class="bubble-click" data-key="metabolic" filter="url(#bubbleShadow)">
+              <circle cx="715.6" cy="91" r="23" fill="none" stroke="#c9a24a" stroke-width="3" stroke-dasharray="3,3"/>
+              <circle cx="715.6" cy="91" r="19" fill="url(#gradRust)"/>
+              <text x="715.6" y="57" text-anchor="middle" font-family="Fraunces,serif" font-weight="700" font-size="15" fill="#5c2e1c">Obesity</text>
+            </g>
+
+            <!-- bubbles: small, labeled beside the circle -->
+            <g class="bubble-click" data-key="glp1" filter="url(#bubbleShadow)">
+              <circle cx="1110.1" cy="140" r="24" fill="none" stroke="#c9a24a" stroke-width="3" stroke-dasharray="3,3"/>
+              <circle cx="1110.1" cy="140" r="20" fill="url(#gradRust)"/>
+              <text x="1148.8" y="144" text-anchor="start" font-family="Fraunces,serif" font-weight="700" font-size="15.6" fill="#5c2e1c">GLP-1</text>
+            </g>
+
+            <g class="bubble-click" data-key="menopause" filter="url(#bubbleShadow)">
+              <circle cx="747.1" cy="140" r="21" fill="none" stroke="#c9a24a" stroke-width="3" stroke-dasharray="3,3"/>
+              <circle cx="747.1" cy="140" r="17" fill="url(#gradPink)"/>
+              <text x="783.4" y="144" text-anchor="start" font-family="Fraunces,serif" font-weight="700" font-size="15.6" fill="#6e3d4d">Menopause</text>
+            </g>
+
+            <g class="bubble-click" data-key="osa" filter="url(#bubbleShadow)">
+              <circle cx="831.8" cy="80" r="21" fill="none" stroke="#c9a24a" stroke-width="3" stroke-dasharray="3,3"/>
+              <circle cx="831.8" cy="80" r="17" fill="url(#gradPurple)"/>
+              <text x="868.1" y="84" text-anchor="start" font-family="Fraunces,serif" font-weight="700" font-size="15.6" fill="#4a3549">Sleep Apnea</text>
+            </g>
+
+            <g class="bubble-click" data-key="insomnia" filter="url(#bubbleShadow)">
+              <circle cx="517.2" cy="80" r="15" fill="url(#gradPurple)"/>
+              <text x="546.2" y="84" text-anchor="start" font-family="Fraunces,serif" font-weight="700" font-size="15.6" fill="#4a3549">Insomnia</text>
+            </g>
+
+            <!-- corner hints -->
+            <text x="148.2" y="48" font-family="Inter,sans-serif" font-size="11.5" fill="#8a7658" font-style="italic">High RTW, lower WTP</text>
+            <text x="1176.6" y="528" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" fill="#8a7658" font-style="italic">High WTP, lower RTW</text>
+          </svg>
+        </div>
+        <div class="bubble-detail" id="bubbleDetail">
+          <div class="bd-empty-wrap">
+            <svg class="bd-empty-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="#d8c9a8" stroke-width="2.5"/>
+              <circle cx="32" cy="32" r="26" fill="none" stroke="#c9a24a" stroke-width="2.5" stroke-dasharray="6,7"/>
+              <circle cx="32" cy="32" r="7" fill="#c9a24a" opacity="0.55"/>
+            </svg>
+            <div class="bd-empty">Click any bubble to see its 2023 US market breakdown (IP, OP/PH, Rx), 2026&ndash;2031 projected spend, and subsegment detail where it exists.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pagenum">4</div>
+  </section>
+
+  <!-- PAGE 4: EMPLOYER OPPORTUNITY SCREEN -->
+<section class="slide" id="conditionscreen">
+    <div class="eyebrow">Opportunity Screen</div>
+    <h2 class="headline">Employers Are Already Spending Meaningfully Across a Broad Set of Conditions</h2>
+    <p class="lede">Spend anatomy, employer willingness-to-pay proof, scaled leaders and momentum are screened as per the market trends.</p>
+    <div class="slide-body">
+      <table class="screen-table">
+        <colgroup>
+          <col style="width:10%;">
+          <col style="width:8%;">
+          <col style="width:6%;">
+          <col style="width:17%;">
+          <col style="width:29.5%;">
+          <col style="width:29.5%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th rowspan="2">Condition</th>
+            <th rowspan="2">Economic Scenario</th>
+            <th colspan="2">Employer Willingness to Pay</th>
+            <th rowspan="2">Why This Matters</th>
+            <th rowspan="2">Scaled Examples</th>
+          </tr>
+          <tr>
+            <th class="screen-subhead">Rating</th>
+            <th class="screen-subhead">Stat</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="cond">Cancer</td><td class="burden"><span class="money-badge">$287.25B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-veryhigh">V. High</span></td><td class="wtp-stat-cell">88% back greater prevention investment<span class="src-btn" tabindex="0">i<span class="src-tooltip">Color Health / Harris Poll: 88% of benefits leaders advocated greater investment in cancer prevention and early detection.<br><a href="https://www.prnewswire.com/news-releases/color-health-survey-uncovers-gap-between-rising-cancer-rates-and-employers-cancer-care-benefits-302366864.html" target="_blank" rel="noopener">Color Health Employer Insights, 2025</a></span></span></td><td>Catastrophic claims, rising drug costs, complex treatment selection.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--metabolic);">AH</span><div class="leader-text"><div><b>AccessHope</b> &middot; 10M+ lives</div><div class="leader-desc">Expert oncology second opinions and care navigation.</div></div></div></td></tr>
+          <tr><td class="cond">MSK</td><td class="burden"><span class="money-badge">$485.50B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-veryhigh">V. High</span></td><td class="wtp-stat-cell">28% / 51% offer standalone (large / v. large)<span class="src-btn" tabindex="0">i<span class="src-tooltip">28% of large employers and 51% of very large employers offer a standalone MSK program.<br><a href="https://www.mercer.com/en-us/insights/us-health-news/supporting-employees-with-chronic-health-conditions/" target="_blank" rel="noopener">Mercer National Survey, 2025</a></span></span></td><td>Large affected population, surgery/imaging avoidance, disability impact.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--bronze-700);">HH</span><div class="leader-text"><div><b>Hinge Health</b> &middot; ~$860M FY26E</div><div class="leader-desc">Digital MSK/physical therapy platform.</div></div></div></td></tr>
+          <tr><td class="cond">Diabetes</td><td class="burden"><span class="money-badge">$148.31B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-veryhigh">V. High</span></td><td class="wtp-stat-cell">32% / 62% offer standalone (large / v. large)<span class="src-btn" tabindex="0">i<span class="src-tooltip">32% of large employers and 62% of very large employers offer standalone diabetes-management programs.<br><a href="https://www.mercer.com/en-us/insights/us-health-news/supporting-employees-with-chronic-health-conditions/" target="_blank" rel="noopener">Mercer National Survey, 2025</a></span></span></td><td>Large chronic population, recurring spend, measurable outcomes.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--sleep);">OV</span><div class="leader-text"><div><b>Omada / Virta</b> &middot; ~$337M FY26E</div><div class="leader-desc">Diabetes coaching and connected-device management.</div></div></div></td></tr>
+          <tr><td class="cond">GLP-1 / Obesity</td><td class="burden"><span class="money-plain">Not cleanly isolated</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-veryhigh">V. High</span></td><td class="wtp-stat-cell">67% cover GLP-1s (weight mgmt)<span class="src-btn" tabindex="0">i<span class="src-tooltip">67% of surveyed employers cover GLP-1s for weight management.<br><a href="https://www.businessgrouphealth.org/newsroom/news-and-press-releases/press-releases/2026-glp-1-survey" target="_blank" rel="noopener">Business Group on Health, 2026</a></span></span></td><td>Huge eligible population &times; expensive chronic therapy.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--cardio);">OFN</span><div class="leader-text"><div><b>Omada, Form, Noom</b></div><div class="leader-desc">GLP-1-adjacent weight-management coaching platforms.</div></div></div></td></tr>
+          <tr><td class="cond">Cardiovascular Prevention / HTN</td><td class="burden">Part of <span class="money-badge">$351.88B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-high">High</span></td><td class="wtp-stat-cell">&gt;90% flag as cost concern, ~1/3 prioritize<span class="src-btn" tabindex="0">i<span class="src-tooltip">More than 90% of benefit leaders identify heart disease and risk factors as a major cost concern, but only about one-third rank prevention as a top priority.<br><a href="https://secure.businesswire.com/news/home/20260202445468/en/National-Survey-Finds-Heart-Conditions-Top-Cost-Driver-for-Employers-and-Health-Plans-But-Action-to-Contain-Costs-Lags" target="_blank" rel="noopener">Hello Heart Heart Health Matters Report, 2026</a></span></span></td><td>Large downstream stroke/MI cost; hypertension is a measurable, modifiable target.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--purple-deep);">HH</span><div class="leader-text"><div><b>Hello Heart</b> &middot; 150+ employer / plan</div><div class="leader-desc">Connected blood-pressure monitoring and coaching.</div></div></div></td></tr>
+          <tr><td class="cond">Mental Health</td><td class="burden"><span class="money-badge">$160.79B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-veryhigh">V. High</span></td><td class="wtp-stat-cell">97% of plans cover MH services<span class="src-btn" tabindex="0">i<span class="src-tooltip">97% of surveyed employers&rsquo; health plans cover mental-health services.<br><a href="https://www.ebri.org/publications/research-publications/center-publications/content/full/2025-ebri-employer-mental-health-survey-report" target="_blank" rel="noopener">EBRI Employer Mental Health Survey, 2025</a></span></span></td><td>Access shortage + major productivity impact; an established benefit category.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--mental);">LS</span><div class="leader-text"><div><b>Lyra / Spring</b> &middot; tens of millions</div><div class="leader-desc">Therapy, psychiatry and coaching networks.</div></div></div></td></tr>
+          <tr><td class="cond">Fertility</td><td class="burden"><span class="money-plain">Not cleanly captured</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-veryhigh">V. High</span></td><td class="wtp-stat-cell">~75% cover IVF; 21% / 45% standalone (large / v. large)<span class="src-btn" tabindex="0">i<span class="src-tooltip">~75% of organizations providing fertility benefits cover IVF treatment. Separately, 21% of large employers and 45% of very large employers offer a standalone fertility program.<br><a href="https://www.ifebp.org/detail-pages/resource/survey/employee-benefits-survey--2026-survey-report" target="_blank" rel="noopener">IFEBP Employee Benefits Survey, 2026</a><a href="https://www.mercer.com/en-us/insights/us-health-news/supporting-employees-with-chronic-health-conditions/" target="_blank" rel="noopener">Mercer National Survey, 2025</a></span></span></td><td>Driven by both healthcare economics and talent/benefit competitiveness.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--womens);">PR</span><div class="leader-text"><div><b>Progyny</b> &middot; $350.5M Q2&rsquo;26</div><div class="leader-desc">Fertility benefits administration and IVF navigation.</div></div></div></td></tr>
+          <tr><td class="cond">Maternity</td><td class="burden"><span class="money-badge">$102.3B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-high">High</span></td><td class="wtp-stat-cell">Market maturity, no validated penetration stat</td><td>Small population but extreme-cost events (NICU); material retention considerations.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--womens);">MV</span><div class="leader-text"><div><b>Maven</b> &middot; 2,300+ employers</div><div class="leader-desc">Maternity and family-building virtual care.</div></div></div></td></tr>
+          <tr><td class="cond">Menopause</td><td class="burden"><span class="money-badge">$15.7B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-growing">Growing</span></td><td class="wtp-stat-cell">27% offer in &rsquo;26, up from 18% in &rsquo;25<span class="src-btn" tabindex="0">i<span class="src-tooltip">27% of organizations offer menopause support/resources in 2026, up from 18% in 2025. (58% is the share of women who say the benefit had a positive work impact, not an offering rate.)<br><a href="https://www.shrm.org/in/topics-tools/news/benefits-compensation/menopause-benefits-see-big-jump-employer-offerings" target="_blank" rel="noopener">SHRM, 2026</a></span></span></td><td>Large, historically underserved population; symptoms affect sleep, cognition, productivity.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--gold);">MD</span><div class="leader-text"><div><b>Midi</b> &middot; ~$150M run-rate</div><div class="leader-desc">Virtual menopause and midlife specialty care.</div></div></div></td></tr>
+          <tr><td class="cond">Obstructive Sleep Apnea</td><td class="burden"><span class="money-badge">$60.21B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-emerging">Emerging</span></td><td class="wtp-stat-cell">No validated penetration stat<span class="src-btn" tabindex="0">i<span class="src-tooltip">43% is the share of U.S. workers estimated to be sleep deficient, not employer OSA-benefit penetration. Rating downgraded from Emerging&ndash;High pending a valid penetration source.<br><a href="https://hrdailyadvisor.hci.org/2025/08/29/5-ways-to-improve-sleep-health-for-your-workforce/" target="_blank" rel="noopener">HR Daily Advisor summary</a></span></span></td><td>Prevalent, underdiagnosed, connected to cardiometabolic disease.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--sleep);">NH</span><div class="leader-text"><div><b>Nox Health</b> &middot; $2,743 saved / member</div><div class="leader-desc">Home sleep testing and OSA care management.</div></div></div></td></tr>
+          <tr><td class="cond">Insomnia</td><td class="burden"><span class="money-badge">$8.68B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-emerging">Emerging</span></td><td class="wtp-stat-cell"></td><td>Extremely prevalent; RAND estimates ~$208B/year in U.S. productivity loss from chronic insomnia.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--purple-deep);">SL</span><div class="leader-text"><div><b>Sleepio</b> &middot; $1,677 lower cost / user</div><div class="leader-desc">Digital CBT-I for chronic insomnia.</div></div></div></td></tr>
+          <tr><td class="cond">GI</td><td class="burden"><span class="money-badge">$147.29B</span></td><td class="wtp-rating-cell"><span class="wtp-chip wtp-emerginghigh">Emerging&ndash;High</span></td><td class="wtp-stat-cell">Growing focus, standalone procurement less established</td><td>Broad, recurring population; standalone employer procurement is still forming.</td><td><div class="leader-cell"><span class="leader-chip" style="background:var(--other);">CY</span><div class="leader-text"><div><b>Cylinder</b> &middot; ~100 clients, 2M lives</div><div class="leader-desc">GI care navigation and treatment support.</div></div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagenum">5</div>
+  </section>
+
+  <section class="slide" id="rtwdims">
+    <div class="eyebrow">Right-to-Win Framework</div>
+    <h2 class="headline">The Oura Right-to-Win Criteria</h2>
+    <p class="lede">We first considered the underlying journeys within each health condition, then explored the right-to-win criteria based on those journeys.</p>
+    <div class="slide-body">
+      <div class="rtwdim-grid">
+
+        <div class="rtwdim-card" style="--rd-accent:#7d5a7a;">
+          <div class="rtwdim-num">1</div>
+          <div class="rtwdim-q">Data &amp; capability advantage</div>
+          <div class="rtwdim-tag">Question we&rsquo;re asking</div>
+          <div class="rtwdim-def">Does Oura already have differentiated data, algorithms, product features or evidence that make it meaningfully better positioned to solve this problem?</div>
+        </div>
+
+        <div class="rtwdim-card" style="--rd-accent:#a8583f;">
+          <div class="rtwdim-num">2</div>
+          <div class="rtwdim-q">Can it change a valuable action?</div>
+          <div class="rtwdim-tag">Question we&rsquo;re asking</div>
+          <div class="rtwdim-def">Can those capabilities actually change a decision, intervention, escalation or treatment/recovery step that matters economically?</div>
+        </div>
+
+        <div class="rtwdim-card" style="--rd-accent:#b8748a;">
+          <div class="rtwdim-num">3</div>
+          <div class="rtwdim-q">Consumer pull</div>
+          <div class="rtwdim-tag">Question we&rsquo;re asking</div>
+          <div class="rtwdim-def">Does Oura have the brand permission and ongoing engagement to play a meaningful role in this journey?</div>
+        </div>
+
+        <div class="rtwdim-card" style="--rd-accent:#4d7c8a;">
+          <div class="rtwdim-num">4</div>
+          <div class="rtwdim-q">Competitive whitespace</div>
+          <div class="rtwdim-tag">Question we&rsquo;re asking</div>
+          <div class="rtwdim-def">Is there a valuable need that scaled incumbents do not already solve well?</div>
+        </div>
+
+      </div>
+
+
+    </div>
+    <div class="pagenum">6</div>
+  </section>
+
+  <section class="slide" id="rtw">
+    <div class="eyebrow">Right-to-Win Screen, Full Detail</div>
+    <h2 class="headline">Oura&rsquo;s Right-to-Win, Market by Market</h2>
+    <p class="lede">Right-to-win isn&rsquo;t scored against the broad category. It&rsquo;s scored against the narrowest defensible wedge inside it, and data advantage plus whether it changes what happens next act as gates, not points to average.</p>
+    <div class="slide-body">
+      <div class="rtw-body">
+
+        <div class="rtw-legend">
+          <span class="rtw-legend-label">Scale</span>
+          <span class="rtw-legend-scale"><span class="sb sb-h">H</span>High</span>
+          <span class="rtw-legend-scale"><span class="sb sb-mh">M&ndash;H</span>Med&ndash;High</span>
+          <span class="rtw-legend-scale"><span class="sb sb-m">M</span>Medium</span>
+          <span class="rtw-legend-scale"><span class="sb sb-lm">L&ndash;M</span>Low&ndash;Med</span>
+          <span class="rtw-legend-scale"><span class="sb sb-l">L</span>Low</span>
+          <span class="rtw-legend-hint">Click any score or verdict to see its rationale</span>
+        </div>
+
+        <table class="rtw-table">
+          <thead>
+            <tr>
+              <th class="lft">Platform</th>
+              <th class="lft">Best Oura wedge</th>
+              <th>Data<br>advantage</th>
+              <th>Changes a<br>valuable action</th>
+              <th>Consumer<br>pull</th>
+              <th>Competitive<br>whitespace</th>
+              <th class="lft">Overall right-to-win</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr>
+              <td class="rtw-plat">Sleep</td><td class="rtw-wedge">Insomnia management + targeted OSA assessment, referral and monitoring</td><td><span class="sb sb-h tipbtn" tabindex="0">H<span class="sb-tip">Oura&rsquo;s deepest capability: nightly longitudinal sleep, breathing, HR/HRV, temperature and mature insights.</span></span></td><td><span class="sb sb-h tipbtn" tabindex="0">H<span class="sb-tip">Tracks insomnia improvement directly. For OSA it can prompt existing wearers toward assessment, but can&rsquo;t screen non-wearers. The Resmed partnership already routes members to care.</span></span></td><td><span class="sb sb-h tipbtn" tabindex="0">H<span class="sb-tip">Sleep is core to the Oura brand and a top reason members open the app.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">Nox, Sleepio and Resmed already own testing, CBT-I and treatment. Whitespace is continuous measurement around care, not another sleep vendor.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-lead">High &middot; Lead<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">The strongest Oura-native platform. Win by owning the measurement/engagement layer across insomnia and targeted apnea pathways, not mass OSA screening.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Metabolic / GLP-1</td><td class="rtw-wedge">GLP-1 support + emerging cardiometabolic risk, not broad diabetes management</td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">Sleep, activity, recovery and stress context, plus GLP-1 capability and new Stelo glucose integration, but doesn&rsquo;t own the primary disease biomarker.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">Valuable if it improves treatment support, behavior or escalation, but less likely to drive core medication decisions than glucose itself. Needs proof.</span></span></td><td><span class="sb sb-h tipbtn" tabindex="0">H<span class="sb-tip">Weight, exercise, sleep and metabolic health already fit Oura usage; a months-long GLP-1 journey gives repeated touchpoints.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Omada, Dexcom, Virta, Form and Noom already compete hard around GLP-1 and metabolic management.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-build">High &middot; Build<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">A better market than broad diabetes. The thesis is making an expensive treatment journey work better, not building another diabetes DTx.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Women&rsquo;s Health</td><td class="rtw-wedge">Menopause + fertility, with pregnancy as a monitoring pilot</td><td><span class="sb sb-h tipbtn" tabindex="0">H<span class="sb-tip">Temperature, cycle, sleep, HR/HRV, recovery and symptom context are unusually relevant; Oura already has fertility and menopause capability.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">Strongest in cycle/fertility intelligence and treatment-response tracking; pregnancy is compelling but less proven to change obstetric care.</span></span></td><td><span class="sb sb-h tipbtn" tabindex="0">H<span class="sb-tip">Substantial existing brand permission with women using Oura for cycle, fertility, sleep and health understanding.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">No longer empty whitespace. Progyny (600+ employers) and Maven now span fertility through menopause and increasingly own the clinical layer.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-build">High &middot; Build<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Strong alignment of brand, physiology and employer demand. Differentiate on the continuous intelligence layer, not a new clinical women&rsquo;s-health platform.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Predictive Prevention</td><td class="rtw-wedge">Emerging Sleep &times; Metabolic &times; CV risk, not generic wellness</td><td><span class="sb sb-h tipbtn" tabindex="0">H*<span class="sb-tip">Personal baselines across multiple longitudinal signals may be more differentiated than any single disease metric. High potential, unproven.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H*<span class="sb-tip">Valuable only if a trajectory change translates into a concrete next step, such as a BP check, labs, PCP visit or program enrollment.</span></span></td><td><span class="sb sb-h tipbtn" tabindex="0">H<span class="sb-tip">&ldquo;Help me understand where my health is headed&rdquo; is close to Oura&rsquo;s existing proposition and high-frequency engagement.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">More whitespace between wellness and diagnosed-condition management, though vendors are moving upstream and multi-condition.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-potential">High Potential<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Possibly the eventual platform connecting Sleep, Metabolic and CV, but wedges must prove the signal-to-action model and solve deployment first.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Cardiovascular</td><td class="rtw-wedge">Hypertension / emerging CV risk upstream, not established CHF or MI</td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H*<span class="sb-tip">Continuous physiology and early hypertension work are relevant, but Oura lacks the direct BP measurement that drives HTN management today.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Could prompt a confirmatory cuff reading or clinical evaluation; once HTN is known, the cuff and program are more actionable than Oura.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">A credible extension of &ldquo;understand my health,&rdquo; but not as Oura-native as sleep or recovery.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Hello Heart already combines a connected BP monitor, app and personalized management across 150+ employers and 250K+ members.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-medium">Medium Today<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Huge economic prize, but Oura&rsquo;s differentiated position is before the mature HTN management loop, not inside it.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Mental Health</td><td class="rtw-wedge">Sustained-stress recognition + benefit activation, not therapy</td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Stress, Resilience and recovery capability exists, but these signals are nonspecific to anxiety, depression or acuity.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">May improve when someone is nudged toward support, but doesn&rsquo;t determine therapy, medication or psychiatric management.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">Strong permission around stress/wellbeing and engagement; permission weakens as the proposition moves toward clinical mental illness.</span></span></td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">Extremely mature market. Lyra alone reaches 20M+ people directly and 100M+ through plans and partners with integrated therapy and psychiatry.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-medlow">Med&ndash;Low<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">High engagement is an amplifier, not enough to build a vertical. Better as a horizontal activation capability across the platform.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">MSK</td><td class="rtw-wedge">Perioperative / post-surgical recovery, not broad chronic MSK</td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Activity, sleep and recovery versus personal baseline may characterize recovery, but aren&rsquo;t the core data for diagnosing or treating MSK.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M*<span class="sb-tip">Could identify stalled recovery or inform follow-up, but needs evidence it actually changes care or return-to-work outcomes.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Recovery fits the brand better than positioning Oura as treating back pain.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Hinge already has 2,929 clients, wearables and clinicians, and is expanding beyond core MSK; Sword adds further crowding.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-medlow">Med&ndash;Low &middot; Pilot<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Attractive economics alone don&rsquo;t equal right-to-win. Oura still needs to prove incremental recovery value versus sophisticated incumbents.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Cancer</td><td class="rtw-wedge">Active-treatment / perioperative recovery monitoring, not broad cancer management</td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Medium in recovery, low in core cancer care. Oura can track general physiology and recovery but lacks oncology-specific signals or treatment capability.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M*<span class="sb-tip">Potential value is earlier recognition of deterioration, complications or stalled recovery, not treatment selection. Unproven.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Members may accept Oura as a supportive/recovery tool; little permission to influence oncology decisions.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Deep oncology players already own the important decisions. AccessHope alone serves 800+ employers and 10M+ lives.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-medlow">Med&ndash;Low &middot; Pilot<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Proves that huge TAM plus great device economics aren&rsquo;t enough. Only compelling if monitoring changes complications, escalation or recovery.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">GI</td><td class="rtw-wedge">IBS / symptom-trigger context, but no clear Oura-native wedge today</td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Sleep, stress and autonomic context may be relevant, but Oura lacks a GI-specific signal.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Unclear when Oura data would alter testing, medication or escalation rather than simply explain correlations.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Plausible consumer interest, but Oura has limited brand permission specifically in GI.</span></span></td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">Oshi and Cylinder already go much deeper end-to-end; Oshi reports $6,081 in annual per-member medical savings.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-low">Low<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Attractive employer problem, but the ring is currently peripheral to the economic and clinical loop.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Autoimmune / Rheum</td><td class="rtw-wedge">Disease-specific flare or treatment-response monitoring, if proven</td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Sleep, recovery, temperature and stress may move with flares, but signals are currently nonspecific.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M*<span class="sb-tip">Changes if Oura can predict a flare early enough to alter treatment or testing, and that evidence doesn&rsquo;t broadly exist today.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Recovery/wellbeing fits, but Oura lacks strong permission as an autoimmune-management product.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Less mature than diabetes/MSK, but not empty. WellTheory already sells against autoimmune specialty-drug spend, reporting $9.4K+ in annual biologic savings per member.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-low">Low&ndash;Med &middot; Research<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Economically tempting but currently an evidence problem. Worth studying rather than commercializing broadly.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Respiratory (ex-OSA)</td><td class="rtw-wedge">No strong wedge today. OSA already belongs to Sleep</td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Respiration, SpO2 and activity provide context, but not spirometry, inhaler use or the core measures driving treatment.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">General deterioration may prompt action, but the causal path is much weaker than sleep apnea.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Breathing/sleep is adjacent to Oura, but asthma and COPD aren&rsquo;t native brand spaces.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M<span class="sb-tip">Connected respiratory tools already capture more disease-specific signals, including inhaler usage and symptoms.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-low">Low<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Pull OSA into Sleep. Once removed, broad respiratory becomes a much weaker Oura platform.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">Migraine</td><td class="rtw-wedge">Trigger / prodrome identification, if a predictive signal is proven</td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M*<span class="sb-tip">Sleep, circadian and stress changes are plausible triggers, but there&rsquo;s no validated migraine-specific signal today.</span></span></td><td><span class="sb sb-m tipbtn" tabindex="0">M*<span class="sb-tip">If Oura could reliably warn someone early enough to change medication or behavior, the value proposition changes materially. Potential only.</span></span></td><td><span class="sb sb-mh tipbtn" tabindex="0">M&ndash;H<span class="sb-tip">Trigger identification is intuitive and fits how consumers already use Oura.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Getting more competitive. Hinge is already expanding into migraine alongside MSK and GI.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-low">Low&ndash;Med &middot; Research<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">The desired role fits wearables conceptually, but the differentiated signal isn&rsquo;t yet demonstrated.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">CKD</td><td class="rtw-wedge">No strong wedge. Value sits in labs, dialysis and fluid/BP management</td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">eGFR/creatinine, BP, fluid/weight and dialysis data matter far more than Oura&rsquo;s signals.</span></span></td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">Oura data is unlikely to alter the clinical decisions driving kidney spend.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">General-health permission exists; kidney-care permission does not.</span></span></td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">Highly clinical incumbents already own end-to-end care. Strive alone manages nearly $5B in medical spend.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-low">Low<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">The clearest counterexample to &ldquo;high-cost cohort = opportunity.&rdquo; Economics can&rsquo;t compensate for weak differentiation.</span></span></span></td>
+            </tr>
+
+            <tr>
+              <td class="rtw-plat">SUD</td><td class="rtw-wedge">No compelling standalone wedge today</td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">Physiological changes are highly nonspecific for substance use or relapse.</span></span></td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">Unsafe to infer meaningful treatment actions from wearable signals alone.</span></span></td><td><span class="sb sb-l tipbtn" tabindex="0">L<span class="sb-tip">Brand permission and trust are major barriers given sensitivity and employer-surveillance concerns.</span></span></td><td><span class="sb sb-lm tipbtn" tabindex="0">L&ndash;M<span class="sb-tip">Specialized providers such as Pelago already deliver comprehensive substance-use treatment to employers and health plans.</span></span></td><td class="rtw-verdict-cell"><span class="verdict-pill verdict-low">Low<span class="info-btn tipbtn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Weak data specificity plus weak brand permission make this unattractive despite genuine employer burden.</span></span></span></td>
+            </tr>
+
+          </tbody>
+        </table>
+
+        <div class="rtw-bottom-line">Oura&rsquo;s opportunity isn&rsquo;t to become the next condition-management company. It&rsquo;s to enter through a few Oura-native wedges (Sleep, Metabolic/GLP-1, Women&rsquo;s Health), then build the longitudinal layer that connects members into the right care.</div>
+
+      </div>
+    </div>
+    <div class="pagenum">7</div>
+  </section>
+
+
+  <section class="slide" id="anatomy">
+    <div class="eyebrow">Spend Anatomy</div>
+    <h2 class="headline">Conditions of Similar Size Have Very Different Economic Profiles, Changing Where Oura Can Plausibly Create Value</h2>
+    <p class="lede">Bar length is relative within each condition, not comparable across cards.</p>
+    <div class="slide-body">
+      <div class="sm-grid">
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">Cancer</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:24.1%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>Chemotherapy / infused treatment</b><span>~21% of medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:17.2%; background:#a8583f;"></div></div><span class="sm-bar-label"><b>Medications</b><span>~15% of medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#c9a24a;"></div></div><span class="sm-bar-label"><b>Antineoplastics</b><span>~87% of Rx spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:14.9%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Major cancer subsegments</b><span>Breast 13%, lung 7% of detailed medical spend</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip">Detection sits outside Oura&rsquo;s near-term role: signals aren&rsquo;t diagnostic-grade for malignancy, and a false positive carries real clinical risk. The more grounded wedge is tracking sleep, activity, resting heart rate and temperature during treatment to flag signs of infection or stalled recovery, prompting earlier follow-up rather than replacing oncology care.</span></span></b><br>Tracks sleep, activity, heart rate and temperature during treatment to flag infection or stalled recovery, not to detect malignancy.</div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">Diabetes</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:93.4%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>Managing condition</b><span>85% of care-stage spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#c9a24a;"></div></div><span class="sm-bar-label"><b>Antidiabetic drugs</b><span>91% of Rx spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:9.9%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Devices / supplies + diagnostics</b><span>~9% of Rx-related spend</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip">Oura doesn&rsquo;t measure glucose, so it can&rsquo;t replace a CGM. Its role is context around the biomarker: sleep, activity and stress patterns that influence glycemic control, surfaced alongside CGM data to help someone understand why control is slipping.</span></span></b><br>Surfaces sleep, activity and stress context alongside CGM data to help explain why glycemic control is slipping.</div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">Mental Health</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#a15c5c;"></div></div><span class="sm-bar-label"><b>Psychotherapy</b><span>~43% of detailed medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:39.5%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>Behavioral health services</b><span>~17% of detailed medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:81.4%; background:#c9a24a;"></div></div><span class="sm-bar-label"><b>Managing conditions</b><span>35% of care-stage spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:83.7%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Restoring health</b><span>36% of care-stage spend</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip">Oura can&rsquo;t diagnose a mental health condition, but sustained deviations in stress, sleep and resting heart rate can flag when someone&rsquo;s coping is deteriorating, prompting them toward an EAP or existing benefit earlier than they&rsquo;d seek help on their own.</span></span></b><br>Flags sustained deviations in stress, sleep and resting heart rate that signal deteriorating coping, prompting earlier use of an EAP.</div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">Maternity</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#b8748a;"></div></div><span class="sm-bar-label"><b>Normal pregnancy / delivery</b><span>48% of detailed medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:68.75%; background:#a15c5c;"></div></div><span class="sm-bar-label"><b>High-risk / antepartum</b><span>33% of detailed medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:33.3%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Labor / delivery / postpartum complications</b><span>16% of detailed medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:6.25%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>Infertility</b><span>3% in this taxonomy</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip info-tooltip-right">A defined nine-month population with a clear start and end date makes ring economics easier to justify than an open-ended chronic condition. The role is tracking sleep, temperature and recovery between prenatal visits to flag when something looks off before the next scheduled appointment.</span></span></b><br>Tracks sleep, temperature and recovery between prenatal visits to flag issues before the next scheduled appointment.</div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">Obstructive Sleep Apnea</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>DME and supplies</b><span>CPAP machines, masks, etc. &mdash; 65.3%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:15.9%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Sleep studies (diagnostic)</b><span>10.4%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:8.9%; background:#a8583f;"></div></div><span class="sm-bar-label"><b>Established patient visits</b><span>5.8%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:7.3%; background:#7d5a7a;"></div></div><span class="sm-bar-label"><b>Neurostimulator procedure</b><span>4.8%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:4.9%; background:#c9a24a;"></div></div><span class="sm-bar-label"><b>Home sleep studies</b><span>3.2%</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip">Oura&rsquo;s nighttime breathing and blood-oxygen patterns can flag undiagnosed risk before someone has ever had a sleep study, creating a lead into a home test and diagnosis, then measuring PAP adherence and recovery afterward.</span></span></b><br>Flags undiagnosed risk via nighttime breathing and blood-oxygen patterns, then measures PAP adherence after diagnosis.</div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">Insomnia</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Sleep studies</b><span>20.0%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:89.5%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>DME and supplies</b><span>17.9%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:21%; background:#7d5a7a;"></div></div><span class="sm-bar-label"><b>Behavioral health / psychotherapy</b><span>4.2%</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip">Direct medical spend is tiny because insomnia rarely shows up as its own claim. Oura measures the actual sleep disruption continuously, which self-report tools can&rsquo;t, making it possible to show improvement even where claims data shows almost nothing.</span></span></b><br>Measures actual sleep disruption continuously, showing improvement even where claims data shows almost nothing.</div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">Cardiovascular</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:83%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Chronic Disease Management</b><span>CHF, CAD, hemorrhagic/ischemic stroke &middot; 8.3% of medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:49%; background:#c9a24a;"></div></div><span class="sm-bar-label"><b>Diagnostics &amp; Devices</b><span>Echo exam of heart, DME and supplies &middot; 4.9% of medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:98%; background:#a8583f;"></div></div><span class="sm-bar-label"><b>Acute / Emergency Care</b><span>Observation and emergent visits &middot; 9.8% of medical spend</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>Hypertension</b><span>31% of patients, only ~10% of medical spend</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip">Prevention today is cheap; the expense comes later from strokes and heart attacks. Oura&rsquo;s nighttime signal patterns can flag elevated risk in people without a diagnosis, pointing them toward a blood pressure check years before a costly event.</span></span></b><br>Flags elevated risk in undiagnosed people, pointing them to a blood pressure check years before a costly event.</div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-header"><span class="sm-name">MSK</span><span class="sm-size">&nbsp;</span></div>
+          <div class="sm-bars">
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:100%; background:#4d7c8a;"></div></div><span class="sm-bar-label"><b>Treating conditions</b><span>68.2%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:28.4%; background:#8a7658;"></div></div><span class="sm-bar-label"><b>Restoring health</b><span>19.4%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:13.3%; background:#c9a24a;"></div></div><span class="sm-bar-label"><b>Managing conditions</b><span>9.1%</span></span></div>
+            <div class="sm-bar-row"><div class="sm-bar-track"><div class="sm-bar-fill" style="width:4.8%; background:#a8583f;"></div></div><span class="sm-bar-label"><b>Promoting health</b><span>3.3%</span></span></div>
+          </div>
+          <div class="sm-implication"><b>Oura Implication<span class="info-btn" tabindex="0">i<span class="info-tooltip info-tooltip-right">Digital PT alone competes directly with Hinge and Sword&rsquo;s clinical programs. Oura&rsquo;s narrower edge is measuring whether someone&rsquo;s activity and recovery are actually improving after a procedure, flagging a stalled recovery to a physical therapist before it becomes a bigger problem.</span></span></b><br>Measures whether activity and recovery are actually improving post-procedure, flagging a stalled recovery early.</div>
+        </div>
+
+      </div>
+    </div>
+    <button class="detail-link" onclick="document.getElementById('condition-spend-breakdown').scrollIntoView({behavior:'smooth'})">Click here to get more details <span>&rarr;</span></button>
+    <div class="pagenum">8</div>
+  </section>
+
+  <section class="slide" id="appendix-divider">
+    <div class="appendix-divider-body">
+      <h2 class="appendix-divider-title">Appendix</h2>
+      <div class="appendix-divider-rule"></div>
+      <div class="appendix-divider-sub">Supporting Detail</div>
+    </div>
+    <div class="pagenum">9</div>
+  </section>
+
+  <section class="slide" id="appendix-wtp">
+    <div class="eyebrow">Appendix &middot; Supporting Detail</div>
+    <h2 class="headline">Employer Willingness-to-Pay, Condition by Condition</h2>
+    <p class="lede">The full proof points and competitive economics behind the WTP ratings used in the Employer Condition Opportunity Screen.</p>
+    <div class="slide-body">
+      <table class="appendix-table">
+        <thead><tr><th>Condition / Subsegment</th><th>WTP</th><th>Proof Employers Are Spending</th><th>Why This Segment Matters</th><th>Competitive Proof / Economics</th><th>What Employers Buy Today</th></tr></thead>
+        <tbody>
+          <tr><td class="cond">Cancer / Oncology</td><td><span class="wtp-chip wtp-veryhigh">V. High</span></td><td>88% of benefits leaders back greater investment in cancer prevention and early detection; ~50% will offer a cancer COE in 2026.<span class="src-btn" tabindex="0">i<span class="src-tooltip">Color Health / Harris Poll: 88% of benefits leaders advocated greater investment in cancer prevention and early detection.<br><a href="https://www.prnewswire.com/news-releases/color-health-survey-uncovers-gap-between-rising-cancer-rates-and-employers-cancer-care-benefits-302366864.html" target="_blank" rel="noopener">Color Health Employer Insights, 2025</a></span></span></td><td>Catastrophic claims, rising drug costs, complex treatment selection.</td><td>AccessHope &mdash; 800+ employers, 10M+ covered members.</td><td>Screening, second opinion, oncology navigation, COEs.</td></tr>
+          <tr><td class="cond">MSK: Back / Joint / Orthopedic</td><td><span class="wtp-chip wtp-veryhigh">V. High</span></td><td>28% of large employers and 51% of very large employers offer a standalone MSK program.<span class="src-btn" tabindex="0">i<span class="src-tooltip">28% of large employers and 51% of very large employers offer a standalone MSK program.<br><a href="https://www.mercer.com/en-us/insights/us-health-news/supporting-employees-with-chronic-health-conditions/" target="_blank" rel="noopener">Mercer National Survey, 2025</a></span></span></td><td>Large affected population, surgery/imaging avoidance, disability impact.</td><td>Hinge Health &mdash; 2,929 clients, ~$860M FY26E revenue.</td><td>Digital PT, exercise therapy, coaching, surgery avoidance/navigation.</td></tr>
+          <tr><td class="cond">Metabolic: Diabetes / Prediabetes</td><td><span class="wtp-chip wtp-veryhigh">V. High</span></td><td>32% of large employers and 62% of very large employers offer a standalone diabetes-management program.<span class="src-btn" tabindex="0">i<span class="src-tooltip">32% of large employers and 62% of very large employers offer standalone diabetes-management programs.<br><a href="https://www.mercer.com/en-us/insights/us-health-news/supporting-employees-with-chronic-health-conditions/" target="_blank" rel="noopener">Mercer National Survey, 2025</a></span></span></td><td>Large chronic population, recurring spend, measurable outcomes.</td><td>Omada &mdash; 2,000+ employers/plans, ~$337M FY26E revenue.</td><td>Coaching + connected devices, DPP, medication support, escalation.</td></tr>
+          <tr><td class="cond">Metabolic: Obesity / GLP-1</td><td><span class="wtp-chip wtp-veryhigh">V. High / Accel.</span></td><td>67% of surveyed employers cover GLP-1s for weight management.<span class="src-btn" tabindex="0">i<span class="src-tooltip">67% of surveyed employers cover GLP-1s for weight management.<br><a href="https://www.businessgrouphealth.org/newsroom/news-and-press-releases/press-releases/2026-glp-1-survey" target="_blank" rel="noopener">Business Group on Health, 2026</a></span></span></td><td>Huge eligible population &times; expensive chronic therapy.</td><td>Omada &gt;$330M platform; Virta, Form, Wondr, Noom also compete.</td><td>GLP-1 coverage, prior auth/utilization mgmt, coaching, outcomes guarantees.</td></tr>
+          <tr><td class="cond">Mental Health: Anxiety / Depression / SUD</td><td><span class="wtp-chip wtp-veryhigh">V. High</span></td><td>97% of surveyed employers&rsquo; health plans cover mental-health services.<span class="src-btn" tabindex="0">i<span class="src-tooltip">97% of surveyed employers&rsquo; health plans cover mental-health services.<br><a href="https://www.ebri.org/publications/research-publications/center-publications/content/full/2025-ebri-employer-mental-health-survey-report" target="_blank" rel="noopener">EBRI Employer Mental Health Survey, 2025</a></span></span></td><td>Access shortage + major productivity impact; an established benefit category.</td><td>Spring Health &mdash; 450+ employers, ~$1B target revenue (with Alma).</td><td>Therapy, psychiatry, coaching, digital CBT, EAP augmentation.</td></tr>
+          <tr><td class="cond">Women&rsquo;s Health: Fertility / Family Building</td><td><span class="wtp-chip wtp-veryhigh">V. High</span></td><td>~75% of organizations providing fertility benefits cover IVF treatment; 21% of large employers and 45% of very large employers offer a standalone fertility program.<span class="src-btn" tabindex="0">i<span class="src-tooltip">~75% of organizations providing fertility benefits cover IVF treatment. Separately, 21% of large employers and 45% of very large employers offer a standalone fertility program.<br><a href="https://www.ifebp.org/detail-pages/resource/survey/employee-benefits-survey--2026-survey-report" target="_blank" rel="noopener">IFEBP Employee Benefits Survey, 2026</a><a href="https://www.mercer.com/en-us/insights/us-health-news/supporting-employees-with-chronic-health-conditions/" target="_blank" rel="noopener">Mercer National Survey, 2025</a></span></span></td><td>Driven by both healthcare economics and talent/benefit competitiveness.</td><td>Progyny &mdash; 604 clients, $350.5M Q2&rsquo;26 revenue.</td><td>Fertility navigation, clinic network, IVF/IUI coverage, concierge care.</td></tr>
+          <tr><td class="cond">Cardiovascular: HTN / Heart Risk</td><td><span class="wtp-chip wtp-high">High</span></td><td>&gt;90% of benefit leaders flag heart disease and risk factors as a major cost concern, though only about one-third rank prevention as a top priority; ~$296K average high-cost claim.<span class="src-btn" tabindex="0">i<span class="src-tooltip">More than 90% of benefit leaders identify heart disease and risk factors as a major cost concern, but only about one-third rank prevention as a top priority.<br><a href="https://secure.businesswire.com/news/home/20260202445468/en/National-Survey-Finds-Heart-Conditions-Top-Cost-Driver-for-Employers-and-Health-Plans-But-Action-to-Contain-Costs-Lags" target="_blank" rel="noopener">Hello Heart Heart Health Matters Report, 2026</a></span></span></td><td>Large downstream stroke/MI cost; hypertension is a measurable, modifiable target.</td><td>Hello Heart &mdash; 150+ clients, 100% fees at risk, 2:1 ROI guarantee.</td><td>Connected BP monitor, digital coaching, medication adherence.</td></tr>
+          <tr><td class="cond">Women&rsquo;s Health: Maternity / High-Risk / Postpartum</td><td><span class="wtp-chip wtp-high">High</span></td><td>No validated penetration stat; newborn/infant care remains consistently among the highest-cost claim categories (~$630K average).</td><td>Small population but extreme-cost events (NICU); material retention considerations.</td><td>Maven &mdash; 2,300+ employer clients.</td><td>Maternity navigation, virtual OB/doula, high-risk ID, postpartum support.</td></tr>
+          <tr><td class="cond">Women&rsquo;s Health: Menopause / Midlife</td><td><span class="wtp-chip wtp-growing">Med-High, Growing</span></td><td>27% of organizations offer menopause support/resources in 2026, up from 18% in 2025.<span class="src-btn" tabindex="0">i<span class="src-tooltip">27% of organizations offer menopause support/resources in 2026, up from 18% in 2025. (58% is the share of women who say the benefit had a positive work impact, not an offering rate.)<br><a href="https://www.shrm.org/in/topics-tools/news/benefits-compensation/menopause-benefits-see-big-jump-employer-offerings" target="_blank" rel="noopener">SHRM, 2026</a></span></span></td><td>Large, historically underserved population; symptoms affect sleep, cognition, productivity.</td><td>Maven, Midi, Progyny expanding into midlife care.</td><td>Virtual specialists, hormone/non-hormone treatment, often bundled into women&rsquo;s health.</td></tr>
+          <tr><td class="cond">Sleep: OSA</td><td><span class="wtp-chip wtp-emerging">Medium / Emerging</span></td><td>No validated employer-penetration stat; real ROI shown where measured: 4:1 3-year ROI at AT&amp;T, $3,089/member at Southern Co.<span class="src-btn" tabindex="0">i<span class="src-tooltip">43% is sometimes cited for OSA employer interest, but that figure is the share of U.S. workers estimated to be sleep deficient, not employer-benefit penetration.<br><a href="https://hrdailyadvisor.hci.org/2025/08/29/5-ways-to-improve-sleep-health-for-your-workforce/" target="_blank" rel="noopener">HR Daily Advisor summary</a></span></span></td><td>Prevalent, underdiagnosed, connected to cardiometabolic disease.</td><td>Nox Health / SleepCharge &mdash; ~$2,743 saved per treated member.</td><td>Screening &rarr; home testing &rarr; diagnosis &rarr; PAP &rarr; adherence management.</td></tr>
+          <tr><td class="cond">Sleep: Insomnia</td><td><span class="wtp-chip wtp-emerging">Medium / Emerging</span></td><td>Not yet a mainstream carve-out; Sleepio offered at Comcast, Hartford, Boston Medical Center, AmeriGas.</td><td>Extremely prevalent; RAND estimates ~$208B/year in U.S. productivity loss from chronic insomnia.</td><td>Big Health / Sleepio, Nox Health &mdash; a much smaller commercial category than MSK/fertility.</td><td>Digital CBT-I, sleep coaching, often via the mental-health/PBM budget.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="detail-link" onclick="document.getElementById('rtw').scrollIntoView({behavior:'smooth'})">Back to Opportunity Thesis <span>&rarr;</span></button>
+    <div class="pagenum">10</div>
+  </section>
+
+  <section class="slide" id="condition-spend-breakdown">
+    <div class="eyebrow">Appendix &middot; Condition Spend Breakdown</div>
+    <h2 class="headline">How Claims Spend Breaks Down Across the Conditions</h2>
+    <p class="lede">Each condition is decomposed into the claims-based care categories, depicting where medical spend is concentrated today. Select a condition at left to see its breakdown.</p>
+    <div class="slide-body">
+      <div class="csb-wrap">
+        <div class="csb-rail" id="csbRail"></div>
+        <div class="csb-panel" id="csbPanel"></div>
+      </div>
+    </div>
+    <button class="detail-link" onclick="document.getElementById('anatomy').scrollIntoView({behavior:'smooth'})">Click here to view the Summarized view <span>&rarr;</span></button>
+    <div class="pagenum">11</div>
+  </section>
+
+</div>
+
+<script>
+const sections = Array.from(document.querySelectorAll('.dot-item')).map(b => document.getElementById(b.dataset.target));
+const dots = Array.from(document.querySelectorAll('.dot-item'));
+dots.forEach(d => d.addEventListener('click', () => {
+  document.getElementById(d.dataset.target).scrollIntoView({behavior:'smooth'});
+}));
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      const idx = sections.indexOf(entry.target);
+      dots.forEach((d,i) => d.classList.toggle('active', i === idx));
+    }
+  });
+}, {threshold:0.5});
+sections.forEach(s => { if(s) observer.observe(s); });
+
+// Click-to-reveal rationale for score badges and info icons (works alongside hover)
+document.querySelectorAll('.tipbtn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wasOpen = btn.classList.contains('is-open');
+    document.querySelectorAll('.tipbtn.is-open').forEach(b => b.classList.remove('is-open'));
+    if(!wasOpen) btn.classList.add('is-open');
+  });
+});
+document.addEventListener('click', () => {
+  document.querySelectorAll('.tipbtn.is-open').forEach(b => b.classList.remove('is-open'));
+});
+
+const dotTooltip = document.getElementById('dotTooltip');
+if(dotTooltip){
+  dots.forEach(d => {
+    d.addEventListener('mouseenter', () => {
+      dotTooltip.textContent = `Page ${d.dataset.page}: ${d.dataset.title}`;
+      const rect = d.getBoundingClientRect();
+      dotTooltip.style.top = (rect.top + rect.height/2) + 'px';
+      dotTooltip.classList.add('visible');
+    });
+    d.addEventListener('mouseleave', () => {
+      dotTooltip.classList.remove('visible');
+    });
+  });
+}
+
+const BUBBLE_DATA = {
+  cancer:{name:"Cancer / Oncology",
+    y2023:"$331.6B", ip:"$45.4B", oppH:"$245.2B", rx:"$41.0B",
+    y2026:"$287.25B", y2031:"$483.53B"},
+  msk:{name:"MSK / Chronic Pain / Orthopedic Recovery",
+    y2023:"$468.5B", ip:"$64.8B", oppH:"$400.1B", rx:"$3.6B",
+    y2026:"$485.50B", y2031:"$498.46B"},
+  diabetes:{name:"Metabolic: Diabetes / Prediabetes",
+    y2023:"$161.3B", ip:"$14.7B", oppH:"$40.4B", rx:"$106.2B",
+    y2026:"$148.31B", y2031:"$211.77B",
+    seg:{name:"GLP-1 Subcomponent", rx:"$50.6B"}},
+  metabolic:{name:"Metabolic: Obesity",
+    y2023:"$20.6B", ip:"$8.6B", oppH:"$8.5B", rx:"$3.5B",
+    y2026:"$21.90B", y2031:"$21.38B",
+    seg:{name:"Metabolic: GLP-1", rx:"$1.8B"}},
+  mental:{name:"Mental Health: Anxiety / Depression / Stress",
+    y2023:"$207.5B", ip:"$33.5B", oppH:"$144.1B", rx:"$29.9B",
+    y2026:"$160.79B", y2031:"$346.39B",
+    seg:{name:"Mental Health: Obesity", rx:"$13.2B", note:"IP / OP-PH not applicable (NA)"}},
+  maternity:{name:"Women's Health: Maternity / Pregnancy",
+    y2023:"$129.5B", ip:"$65.67B", oppH:"$49.29B", rx:"$14.6B",
+    y2026:"$102.3B", y2031:"$199.2B"},
+  glp1:{name:"GLP-1 (Cross-Condition Overlay)",
+    y2023:"&mdash;", ip:"&mdash;", oppH:"&mdash;", rx:"$52.4B",
+    y2026:"&mdash;", y2031:"&mdash;",
+    seg:{name:"Diabetes-linked + obesity-linked Rx combined", rx:"$50.6B + $1.8B"}},
+  menopause:{name:"Women's Health: Menopause / Midlife",
+    y2023:"$13.4B", ip:"$0.06B", oppH:"$3.23B", rx:"$10.1B",
+    y2026:"$15.7B", y2031:"$11.7B"},
+  osa:{name:"Sleep: OSA / Sleep-Disordered Breathing",
+    y2023:"$50.3B", ip:"$0.27B", oppH:"$26.47B", rx:"$23.5B",
+    y2026:"$60.21B", y2031:"$41.2B"},
+  insomnia:{name:"Sleep: Insomnia / Chronic Poor Sleep",
+    y2023:"$9.8B", ip:"$0.09B", oppH:"$2.64B", rx:"$7.1B",
+    y2026:"$8.68B", y2031:"$13.60B"},
+  gi:{name:"GI: IBS / IBD / Chronic Digestive Health",
+    y2023:"$151.5B", ip:"$26.3B", oppH:"$94.2B", rx:"$31.0B",
+    y2026:"$147.29B", y2031:"$179.2B"},
+  cvd:{name:"Cardiovascular: Hypertension / Modifiable CV Risk",
+    y2023:"$330.9B", ip:"$99.7B", oppH:"$198.6B", rx:"$32.7B",
+    y2026:"$351.88B", y2031:"$343.51B"}
+};
+
+function bubbleGrowthTag(y2026, y2031){
+  const a = parseFloat(String(y2026).replace(/[^0-9.]/g,''));
+  const b = parseFloat(String(y2031).replace(/[^0-9.]/g,''));
+  if(isNaN(a) || isNaN(b) || a === 0) return '';
+  const pct = ((b - a) / a) * 100;
+  const cls = pct >= 0 ? 'up' : 'down';
+  const arrow = pct >= 0 ? '&uarr;' : '&darr;';
+  return '<span class="bt-growth ' + cls + '">' + arrow + ' ' + Math.abs(pct).toFixed(0) + '%</span>';
+}
+
+const bubbleDetail = document.getElementById('bubbleDetail');
+const bubbleClicks = document.querySelectorAll('.bubble-click');
+if(bubbleDetail && bubbleClicks.length){
+  bubbleClicks.forEach(b => {
+    b.addEventListener('click', () => {
+      bubbleClicks.forEach(o => o.classList.remove('is-active'));
+      b.classList.add('is-active');
+      const d = BUBBLE_DATA[b.dataset.key];
+      if(!d) return;
+      let html = '<div class="bt-sub">2023 US Market (NHE)</div>'
+        + '<div class="bt-name">' + d.name + '</div>'
+        + '<div class="bt-row"><span class="bt-row-label">Total</span><span class="bt-row-value">' + d.y2023 + '</span></div>'
+        + '<div class="bt-row"><span class="bt-row-label">IP</span><span class="bt-row-value">' + d.ip + '</span></div>'
+        + '<div class="bt-row"><span class="bt-row-label">OP / PH</span><span class="bt-row-value">' + d.oppH + '</span></div>'
+        + '<div class="bt-row"><span class="bt-row-label">Rx</span><span class="bt-row-value">' + d.rx + '</span></div>'
+        + '<div class="bt-sub" style="margin-top:12px;">Projected Spend</div>'
+        + '<div class="bt-row"><span class="bt-row-label">2026</span><span class="bt-row-value">' + d.y2026 + '</span></div>'
+        + '<div class="bt-row"><span class="bt-row-label">2031</span><span class="bt-row-value">' + d.y2031 + bubbleGrowthTag(d.y2026, d.y2031) + '</span></div>';
+      if(d.seg){
+        html += '<div class="bt-seg"><div class="bt-seg-title">Subsegment</div>'
+          + '<div class="bt-seg-name">' + d.seg.name + '</div>'
+          + '<div class="bt-seg-value">Rx ' + d.seg.rx + '</div>'
+          + (d.seg.note ? '<div class="bt-note">' + d.seg.note + '</div>' : '')
+          + '</div>';
+      }
+      bubbleDetail.innerHTML = html;
+    });
+  });
+}
+
+const CSB_ACCENTS = ['var(--metabolic)','var(--bronze-700)','var(--sleep)','var(--cardio)','var(--purple-deep)','var(--gold)','var(--mental)'];
+const CSB_DATA = {
+  cancer:{name:"Cancer", total:290.6, decimals:1, rows:[
+    {label:"Drug-Based Treatment", value:114.5, desc:"Chemo infusion, meds, immunotherapy, radiopharmaceuticals."},
+    {label:"Surgical &amp; Procedural", value:68.7, desc:"Tumor-removal surgery, biopsies, major/minor procedures."},
+    {label:"Disease-Specific Mgmt/Other", value:29.9, desc:"Cancer-type-specific medical mgmt, unclassified lines."},
+    {label:"Diagnostics, Imaging &amp; Labs", value:24.8, desc:"CT/PET/MRI, pathology, genetic testing, labs."},
+    {label:"Anesthesia, Transplant &amp; Support", value:20.5, desc:"Anesthesia, transplant, DME, transfusions."},
+    {label:"Radiation Therapy", value:17.2, desc:"IMRT, proton beam, SRS/SBRT, other radiation."},
+    {label:"Visits &amp; Care Mgmt", value:15.0, desc:"Office visits, observation, home nursing, hospice."}
+  ]},
+  msk:{name:"MSK", total:464.9, decimals:1, rows:[
+    {label:"Surgical &amp; Procedural", value:209.8, desc:"Joint replacement, spine surgery, fracture repair, injections, major/minor procedures."},
+    {label:"Rehabilitation", value:76.7, desc:"Physical therapy, occupational therapy, post-surgical rehabilitation."},
+    {label:"Visits &amp; Care Management", value:70.1, desc:"Office visits, observation, emergency care, routine follow-up."},
+    {label:"Other Specialty Care", value:30.3, desc:"Anesthesia, ancillary and unclassified specialty services."},
+    {label:"Diagnostics, Imaging &amp; Labs", value:27.9, desc:"MRI/CT/X-ray, laboratory work, diagnostic testing."},
+    {label:"DME &amp; Post-Acute Support", value:26.0, desc:"Braces, orthotics, mobility aids, skilled nursing."},
+    {label:"Medications", value:24.1, desc:"Administered drugs and other medical-benefit therapies."}
+  ]},
+  diabetes:{name:"Diabetes", total:55.1, decimals:1, rows:[
+    {label:"Visits &amp; Ongoing Management", value:21.4, desc:"Primary and specialty visits, monitoring, chronic disease management."},
+    {label:"Surgical / Procedural Complications", value:10.2, desc:"Vascular procedures, wound-related surgery, complication management."},
+    {label:"Other Specialty Care", value:8.0, desc:"Neurology, ancillary and unclassified specialty services."},
+    {label:"Devices &amp; Supplies", value:6.8, desc:"Glucose monitors, pumps, testing supplies, other DME."},
+    {label:"Rehab &amp; Post-Acute Care", value:4.0, desc:"Rehabilitation, skilled nursing, post-acute recovery."},
+    {label:"Diagnostics, Imaging &amp; Labs", value:3.8, desc:"Glucose and A1c testing, imaging, diagnostic workups."},
+    {label:"Medications", value:0.9, desc:"Medical-benefit diabetes drugs and administered therapies."}
+  ]},
+  glp1:{name:"GLP-1 / Obesity", total:17.1, decimals:1, rows:[
+    {label:"Surgical &amp; Procedural", value:9.9, desc:"Bariatric surgery and other weight-related procedures."},
+    {label:"Visits &amp; Care Management", value:3.3, desc:"Office visits, specialist consultations, follow-up care."},
+    {label:"Medical Management", value:1.1, desc:"Clinical assessment, comorbidity management, general medical care."},
+    {label:"Diagnostics, Imaging &amp; Labs", value:1.1, desc:"Metabolic testing, laboratory work, imaging, diagnostics."},
+    {label:"Medications", value:0.8, desc:"Medical-benefit weight-management drugs and administered therapies."},
+    {label:"Other Specialty Care", value:0.6, desc:"Ancillary and unclassified obesity-related services."},
+    {label:"DME, Rehab &amp; Post-Acute Care", value:0.3, desc:"Equipment, rehabilitation, skilled nursing support."}
+  ]},
+  cvd:{name:"Cardiovascular Prevention / HTN", total:315.1, decimals:1, note:"Categorized total ($315.1B) differs from the $351.9B figure previously cited on the Opportunity Screen; not yet reconciled (open question).", rows:[
+    {label:"Cardiac Procedures, Surgery &amp; Device Therapy", value:95.6, desc:"Valve surgery, CABG, PCI, catheter ablation, pacemakers/ICDs, catheterizations, vascular interventions, transcatheter valve procedures."},
+    {label:"Visits, Acute Care &amp; Longitudinal Management", value:76.8, desc:"Established/new visits, emergent and observation visits, SNF, home nursing, remote monitoring, urgent care and care-management visits."},
+    {label:"Disease-Specific Cardiac &amp; Vascular Management", value:65.8, desc:"CHF, CAD, arrhythmia, PE, vascular medical care, varicose veins, cardiology-other and unclassified spend."},
+    {label:"Diagnostics, Imaging &amp; Labs", value:27.4, desc:"Echo, ECG, stress tests, nuclear/SPECT, CT/MRI/PET, vascular duplex scans, labs and genetic testing."},
+    {label:"Other Procedures &amp; Inpatient Support", value:27.3, desc:"Bariatric and general surgery, major/minor procedures, anesthesia, chest procedures, central line placement and wound care."},
+    {label:"Rehabilitation, DME &amp; Home Support", value:19.0, desc:"DME/supplies, rehab, PT/OT, cardiac rehab, home evaluation and other home-support services."},
+    {label:"Medication &amp; Infusion Therapy", value:3.2, desc:"Medications, medication infusions, hydration, transfusions and home infusion."}
+  ]},
+  mental:{name:"Mental Health", total:177.6, decimals:1, rows:[
+    {label:"Outpatient Psychotherapy", value:76.9, desc:"Individual, group and addiction-focused talk therapy."},
+    {label:"Behavioral Health Svcs/Assess.", value:37.2, desc:"Psychiatric evaluations, screenings, crisis and behavioral services."},
+    {label:"Visits &amp; Care Mgmt", value:29.5, desc:"Outpatient visits, rehabilitation, home-based care."},
+    {label:"Other / Ancillary Services", value:24.6, desc:"Unclassified claims, occupational therapy, ancillary services."},
+    {label:"Higher-Acuity/Intensive Progr.", value:5.6, desc:"Partial hospitalization, intensive outpatient care, ECT, TMS."},
+    {label:"Diagnostics &amp; Labs", value:2.0, desc:"Laboratory testing and diagnostic workups."},
+    {label:"Medications &amp; Devices", value:1.8, desc:"Administered psychiatric drugs and supporting equipment."}
+  ]},
+  fertility:{name:"Fertility", total:4.58, decimals:2, rows:[
+    {label:"Labs", value:1.58, desc:"Hormone testing, semen analysis, genetic and reproductive laboratory work."},
+    {label:"Procedures &amp; Treatment", value:1.57, desc:"IVF, egg retrieval, embryo transfer, IUI, related procedures."},
+    {label:"Imaging &amp; Diagnostics", value:0.54, desc:"Ultrasound, reproductive imaging and diagnostic evaluations."},
+    {label:"Visits", value:0.40, desc:"Fertility consultations, monitoring visits, treatment follow-up."},
+    {label:"Other / Support", value:0.30, desc:"Anesthesia, ancillary and unclassified fertility services."},
+    {label:"Medications", value:0.17, desc:"Fertility drugs and medically administered therapies."},
+    {label:"DME, Rehab &amp; Post-Acute Care", value:0.02, desc:"Equipment, rehabilitation and limited recovery support."}
+  ]},
+  maternity:{name:"Maternity", total:115.0, decimals:1, note:"Total ($115.0B) differs from the $133.7B figure previously shown for Maternity; reflects an updated categorization, not yet reconciled (open question).", rows:[
+    {label:"Delivery &amp; Women&rsquo;s Health", value:63.8, desc:"Prenatal care, labor and delivery, postpartum obstetric services."},
+    {label:"Visits &amp; Care Management", value:21.1, desc:"Prenatal visits, maternal monitoring, follow-up care."},
+    {label:"Diagnostics, Imaging &amp; Labs", value:15.8, desc:"Ultrasound, prenatal testing, laboratory and diagnostic work."},
+    {label:"Procedures &amp; Surgery", value:5.8, desc:"C-sections, delivery procedures, related surgery."},
+    {label:"Other / General Medical", value:4.3, desc:"General medical, ancillary and unclassified maternity services."},
+    {label:"Medications", value:4.0, desc:"Pregnancy-related medications and administered therapies."},
+    {label:"Neonatal, DME &amp; Post-Acute Support", value:0.2, desc:"Equipment, rehabilitation and limited post-acute support."}
+  ]},
+  menopause:{name:"Menopause", total:3.28, decimals:2, rows:[
+    {label:"Diagnostics, Imaging &amp; Labs", value:1.38, desc:"Hormone testing, imaging, laboratory and diagnostic workups."},
+    {label:"Visits &amp; Care Management", value:1.27, desc:"Consultations, symptom assessment, ongoing follow-up."},
+    {label:"Procedures, Surgery &amp; Women&rsquo;s Health", value:0.39, desc:"Gynecologic procedures, related surgery, women&rsquo;s health services."},
+    {label:"Other Specialty Care", value:0.16, desc:"Ancillary and unclassified menopause-related services."},
+    {label:"Medications", value:0.06, desc:"Hormonal and non-hormonal medically administered therapies."},
+    {label:"Rehab &amp; Post-Acute Support", value:0.02, desc:"Rehabilitation, equipment and limited post-acute care."},
+    {label:"General Medical Management", value:0.005, display:"&lt;$0.01B", desc:"Primary care and broader medical management."}
+  ]},
+  osa:{name:"Obstructive Sleep Apnea", total:26.7, decimals:1, rows:[
+    {label:"DME &amp; Supplies", value:17.5, desc:"CPAP/BiPAP devices, masks, tubing, replacement supplies."},
+    {label:"Diagnostics &amp; Sleep Studies", value:3.7, desc:"Polysomnography, home sleep testing, diagnostic assessment."},
+    {label:"Visits &amp; Care Management", value:2.4, desc:"Sleep-specialist consultations, follow-up, therapy monitoring."},
+    {label:"Procedures", value:2.2, desc:"Airway evaluation and sleep-related diagnostic or therapeutic procedures."},
+    {label:"Other / Support", value:0.5, desc:"Laboratory, imaging, general medical and ancillary services."},
+    {label:"Medications", value:0.2, desc:"Medical-benefit drugs used in associated condition management."},
+    {label:"Surgery", value:0.2, desc:"Airway, ENT and other OSA-related surgical interventions."}
+  ]},
+  insomnia:{name:"Insomnia", total:2.74, decimals:2, rows:[
+    {label:"Visits &amp; Care Management", value:1.17, desc:"Sleep consultations, office visits, ongoing symptom management."},
+    {label:"Diagnostics &amp; Sleep Studies", value:0.58, desc:"Sleep testing, clinical assessment, diagnostic workups."},
+    {label:"DME &amp; Supplies", value:0.49, desc:"Sleep-related equipment and monitoring supplies."},
+    {label:"Other / Support", value:0.35, desc:"Laboratory, imaging, ancillary and unclassified services."},
+    {label:"Procedures", value:0.06, desc:"Sleep-related diagnostic and therapeutic procedures."},
+    {label:"Behavioral Health", value:0.06, desc:"Psychiatric care, CBT-I and associated behavioral services."},
+    {label:"Medications", value:0.03, desc:"Medical-benefit sleep drugs and administered therapies."}
+  ]},
+  gi:{name:"GI", total:120.4, decimals:1, rows:[
+    {label:"Procedures &amp; Endoscopy", value:41.8, desc:"Colonoscopy, upper endoscopy, biopsies, therapeutic procedures."},
+    {label:"Medical Treatment", value:35.2, desc:"Administered drugs and general medical management."},
+    {label:"Visits &amp; Care Management", value:17.5, desc:"Gastroenterology visits, observation, ongoing follow-up."},
+    {label:"Surgery", value:9.3, desc:"Abdominal, colorectal and other GI-related surgery."},
+    {label:"Diagnostics, Imaging &amp; Labs", value:8.0, desc:"Imaging, pathology, laboratory and diagnostic testing."},
+    {label:"Other Specialty Care", value:4.7, desc:"Ancillary and unclassified gastrointestinal services."},
+    {label:"DME, Rehab &amp; Post-Acute Care", value:3.9, desc:"Equipment, rehabilitation and skilled nursing support."}
+  ]}
+};
+const CSB_ORDER = ['cancer','msk','diabetes','glp1','cvd','mental','fertility','maternity','menopause','osa','insomnia','gi'];
+
+const csbRail = document.getElementById('csbRail');
+const csbPanel = document.getElementById('csbPanel');
+
+function fmtB(value, decimals){
+  return '$' + value.toFixed(decimals) + 'B';
+}
+
+function renderCsbPanel(key){
+  const d = CSB_DATA[key];
+  const dec = d.decimals || 1;
+  let html = '';
+  if(d.note){
+    html += '<div class="csb-note">' + d.note + '</div>';
+  }
+  html += '<div class="csb-rows">';
+  d.rows.forEach((r, i) => {
+    const pct = (r.value / d.total * 100);
+    const accent = CSB_ACCENTS[i % CSB_ACCENTS.length];
+    const valText = r.display ? r.display : fmtB(r.value, dec);
+    html += '<div class="csb-row">'
+      + '<div class="csb-row-rank" style="--row-accent:' + accent + ';">' + (i + 1) + '</div>'
+      + '<div class="csb-row-main">'
+        + '<div class="csb-row-top"><span class="csb-row-label">' + r.label + '</span><span class="csb-row-value" style="--row-accent:' + accent + ';">' + valText + '</span></div>'
+        + '<div class="csb-row-bar-track"><div class="csb-row-bar-fill" style="--row-accent:' + accent + '; width:' + Math.max(pct,0.6).toFixed(1) + '%;"></div></div>'
+        + '<div class="csb-row-desc">' + r.desc + '</div>'
+      + '</div>'
+    + '</div>';
+  });
+  html += '</div>';
+  csbPanel.innerHTML = html;
+}
+
+function renderCsbRail(activeKey){
+  csbRail.innerHTML = CSB_ORDER.map((k, i) => {
+    const d = CSB_DATA[k];
+    const dec = d.decimals || 1;
+    const accent = CSB_ACCENTS[i % CSB_ACCENTS.length];
+    const activeCls = k === activeKey ? ' active' : '';
+    const totalText = fmtB(d.total, dec);
+    return '<button class="csb-tile' + activeCls + '" style="--tile-accent:' + accent + ';" data-cond="' + k + '">'
+      + '<span class="csb-tile-hint"></span>'
+      + '<span class="csb-tile-name">' + d.name + '</span>'
+      + '<span class="csb-tile-total">' + totalText + '</span>'
+    + '</button>';
+  }).join('');
+  csbRail.querySelectorAll('.csb-tile').forEach(btn => {
+    btn.addEventListener('click', () => {
+      renderCsbRail(btn.dataset.cond);
+      renderCsbPanel(btn.dataset.cond);
+    });
+  });
+}
+
+if(csbRail && csbPanel){
+  renderCsbRail('cancer');
+  renderCsbPanel('cancer');
+}
+</script>
+
+</body>
+</html>
